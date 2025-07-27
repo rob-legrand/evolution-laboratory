@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html dir="ltr" lang="en-US" xml:lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" lang="en-US">
 <head><title>Evolution laboratory: Competition and cooperation</title>
 
 <link href="style.css" rel="stylesheet" type="text/css" />
@@ -14,11 +14,151 @@
 <p id="instructions">
    Click the population to advance to the next generation.&nbsp; Click and drag around to advance quickly.
 </p>
-<canvas height="840" id="population" width="840">
+<canvas id="population">
    Your browser does not seem to support the <code>&lt;canvas&gt;</code> element correctly.&nbsp; Please use a recent version of a standards-compliant browser such as
    <a href="http://www.opera.com/">Opera</a>, <a href="http://www.google.com/chrome/">Chrome</a> or <a href="http://www.getfirefox.com/">Firefox</a> and enable
    JavaScript.
 </canvas>
+<fieldset id="average-organism-area">
+   <legend>Average organism</legend>
+   <div id="average-organism"></div>
+</fieldset>
+<fieldset id="general-options-area">
+   <legend>General options</legend>
+   <div>
+      <label>Population size:&nbsp;<select id="population-size">
+         <option value="24">24 &times; 24</option>
+         <option value="28">28 &times; 28</option>
+         <option value="30">30 &times; 30</option>
+         <option value="35">35 &times; 35</option>
+         <option value="40">40 &times; 40</option>
+         <option value="42">42 &times; 42</option>
+         <option value="56">56 &times; 56</option>
+         <option selected="selected" value="60">60 &times; 60</option>
+         <option value="70">70 &times; 70</option>
+         <option value="84">84 &times; 84</option>
+         <option value="105">105 &times; 105</option>
+         <option value="120">120 &times; 120</option>
+         <option value="140">140 &times; 140</option>
+         <option value="168">168 &times; 168</option>
+         <option value="210">210 &times; 210</option>
+         <option value="280">280 &times; 280</option>
+         <option value="420">420 &times; 420</option>
+      </select></label>
+   </div><div>
+      <label>Rounds per encounter:&nbsp;<select id="rounds-per-encounter">
+         <option value="1">1</option>
+         <option value="2">2</option>
+         <option value="4">4</option>
+         <option selected="selected" value="8">8</option>
+         <option value="16">16</option>
+         <option value="32">32</option>
+         <option value="64">64</option>
+         <option value="128">128</option>
+         <option value="256">256</option>
+      </select></label>
+   </div><div>
+      Payoffs:&nbsp;<select id="payoff-best">
+         <option selected="selected" value="9">9</option>
+         <option value="8">8</option>
+         <option value="7">7</option>
+         <option value="6">6</option>
+         <option value="5">5</option>
+         <option value="4">4</option>
+         <option value="3">3</option>
+         <option value="2">2</option>
+         <option value="1">1</option>
+         <option value="0">0</option>
+      </select>&nbsp;<select id="payoff-nextbest">
+         <option value="9">9</option>
+         <option value="8">8</option>
+         <option value="7">7</option>
+         <option selected="selected" value="6">6</option>
+         <option value="5">5</option>
+         <option value="4">4</option>
+         <option value="3">3</option>
+         <option value="2">2</option>
+         <option value="1">1</option>
+         <option value="0">0</option>
+      </select>&nbsp;<select id="payoff-nextworst">
+         <option value="9">9</option>
+         <option value="8">8</option>
+         <option value="7">7</option>
+         <option value="6">6</option>
+         <option value="5">5</option>
+         <option value="4">4</option>
+         <option selected="selected" value="3">3</option>
+         <option value="2">2</option>
+         <option value="1">1</option>
+         <option value="0">0</option>
+      </select>&nbsp;<select id="payoff-worst">
+         <option value="9">9</option>
+         <option value="8">8</option>
+         <option value="7">7</option>
+         <option value="6">6</option>
+         <option value="5">5</option>
+         <option value="4">4</option>
+         <option value="3">3</option>
+         <option value="2">2</option>
+         <option value="1">1</option>
+         <option selected="selected" value="0">0</option>
+      </select>
+   </div><div>
+      <label>Game played:&nbsp;<select id="game-played">
+         <option selected="selected" value="prisonersdilemma">Prisoner&rsquo;s dilemma</option>
+         <option value="chicken">Chicken</option>
+         <option value="leader">Leader</option>
+         <option value="battleofthesexes">Battle of the sexes</option>
+         <option value="staghunt">Stag hunt</option>
+         <option value="harmony">Harmony</option>
+         <option value="deadlock">Deadlock</option>
+      </select></label>
+   </div><div>
+      <table class="payoff-table"><caption>Payoff table:</caption><tr>
+         <td></td>
+         <th class="payoff-header">C</th>
+         <th class="payoff-header">D</th>
+      </tr><tr>
+         <th class="payoff-header">C</th>
+         <td>
+            <table><tr>
+               </td><td>
+               <td class="payoff-cell" id="payoff-cell-cc-col"></td>
+            </tr><tr>
+               <td class="payoff-cell" id="payoff-cell-cc-row"></td>
+               </td><td>
+            </tr></table>
+         </td><td>
+            <table><tr>
+               </td><td>
+               <td class="payoff-cell" id="payoff-cell-cd-col"></td>
+            </tr><tr>
+               <td class="payoff-cell" id="payoff-cell-cd-row"></td>
+               </td><td>
+            </tr></table>
+         </td>
+      </tr><tr>
+         <th class="payoff-header">D</th>
+         <td>
+            <table><tr>
+               </td><td>
+               <td class="payoff-cell" id="payoff-cell-dc-col"></td>
+            </tr><tr>
+               <td class="payoff-cell" id="payoff-cell-dc-row"></td>
+               </td><td>
+            </tr></table>
+         </td><td>
+            <table><tr>
+               </td><td>
+               <td class="payoff-cell" id="payoff-cell-dd-col"></td>
+            </tr><tr>
+               <td class="payoff-cell" id="payoff-cell-dd-row"></td>
+               </td><td>
+            </tr></table>
+         </td>
+      </tr></table>
+   </div>
+</fieldset>
 <fieldset id="interaction-neighborhood-area">
    <legend>Interaction neighborhood</legend>
    <div>
@@ -31,7 +171,7 @@
       </td></tr><tr><td>
          <input checked="checked" id="interaction-neighbor-left" type="checkbox" />
       </td><td>
-         <input checked="checked" id="interaction-neighbor-self" type="checkbox" />
+         <input id="interaction-neighbor-self" type="checkbox" />
       </td><td>
          <input checked="checked" id="interaction-neighbor-right" type="checkbox" />
       </td></tr><tr><td>
@@ -41,58 +181,46 @@
       </td><td>
          <input id="interaction-neighbor-right-down" type="checkbox" />
       </td></tr></table>
-   </div>
-   <div>
-      <input id="interaction-moore-neighborhood" type="button" value="Moore" />
+   </div><div>
       <input id="interaction-hex-neighborhood" type="button" value="hex" />
-   </div>
-   <div>
+      <input id="interaction-moore-neighborhood" type="button" value="Moore" />
+   </div><div>
       <input id="interaction-vonneumann-neighborhood" type="button" value="von Neumann" />
-   </div>
-   <div>
+   </div><div>
       <input id="interaction-obliquevonneumann-neighborhood" type="button" value="oblique von Neumann" />
    </div>
 </fieldset>
-<fieldset id="selection-neighborhood-area">
-   <legend>Selection neighborhood</legend>
+<fieldset id="reproduction-options-area">
+   <legend>Reproduction options</legend>
    <div>
-      <table><tr><td>
-         <input id="selection-neighbor-left-up" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="selection-neighbor-up" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="selection-neighbor-right-up" type="checkbox" />
-      </td></tr><tr><td>
-         <input checked="checked" id="selection-neighbor-left" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="selection-neighbor-self" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="selection-neighbor-right" type="checkbox" />
-      </td></tr><tr><td>
-         <input checked="checked" id="selection-neighbor-left-down" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="selection-neighbor-down" type="checkbox" />
-      </td><td>
-         <input id="selection-neighbor-right-down" type="checkbox" />
-      </td></tr></table>
-   </div>
-   <div>
-      <input id="selection-moore-neighborhood" type="button" value="Moore" />
-      <input id="selection-hex-neighborhood" type="button" value="hex" />
-   </div>
-   <div>
-      <input id="selection-vonneumann-neighborhood" type="button" value="von Neumann" />
-   </div>
-   <div>
-      <input id="selection-obliquevonneumann-neighborhood" type="button" value="oblique von Neumann" />
+      <label>Genes on a chromosome:&nbsp;<select id="genes-on-chromosome">
+         <option value="1">1</option>
+         <option value="2">2</option>
+         <option value="4">4</option>
+         <option selected="selected" value="8">8</option>
+      </select></label>
+   </div><div>
+      <label>Selection:&nbsp;<select id="reproduction-selection">
+         <option value="deterministic">Deterministic</option>
+         <option selected="selected" value="probabilistic">Probabilistic</option>
+      </select></label>
+   </div><div>
+      <label>Means:&nbsp;<select id="reproduction-means">
+         <option value="asexual">Asexual</option>
+         <option value="sexualchromosome">Sexual (chromosome)</option>
+         <option selected="selected" value="sexualgene">Sexual (gene)</option>
+      </select></label>
    </div>
 </fieldset>
 <fieldset id="controls-area">
    <legend>Controls</legend>
    <div>
       <input id="randomize" type="button" value="Randomize population" />
-   </div>
-   <div>
+   </div><div>
+      <input id="reset-cooperate" type="button" value="Reset population to pure cooperation" />
+   </div><div>
+      <input id="reset-defect" type="button" value="Reset population to pure defection" />
+   </div><div>
       <input id="advance" type="button" value="Advance to next generation" />
    </div>
 </fieldset>
