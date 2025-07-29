@@ -23,8 +23,13 @@ var startPopulation = function () {
    var payoffReward, payoffSucker, payoffTemptation, payoffPunishment;
    var numGenesOnChromosome, numGeneValues, highestGeneValue, numColorLevelsPerGene;
    var reproductionSelection, reproductionMeans;
+   var competitionAndCooperationRadio = document.getElementById('competition-and-cooperation-evolution-type');
+   var oneCardPokerRadio = document.getElementById('one-card-poker-evolution-type');
+   var auctionGameRadio = document.getElementById('auction-game-evolution-type');
+   var mateSelectionRadio = document.getElementById('mate-selection-evolution-type');
    var populationSizeSelect = document.getElementById('population-size');
    var roundsPerEncounterSelect = document.getElementById('rounds-per-encounter');
+   var gameOptionsArea = document.getElementById('game-options-area');
    var payoffBestSelect = document.getElementById('payoff-best');
    var payoffNextBestSelect = document.getElementById('payoff-nextbest');
    var payoffNextWorstSelect = document.getElementById('payoff-nextworst');
@@ -86,8 +91,13 @@ var startPopulation = function () {
 
    var redrawPopulation = function () {
       var cellX, cellY, farthestFromAverage;
+      var pixelX, pixelY;
       var averageOrganismElement = document.getElementById('average-organism');
       var averageCellValue = {red: 0, green: 0, blue: 0, dot: 0};
+
+      if (!numCellsWide || !numCellsTall) {
+         return;
+      }
 
       // draw cells
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
@@ -96,16 +106,6 @@ var startPopulation = function () {
                                                    cellValues[cellX][cellY].green * numColorLevelsPerGene + ', ' +
                                                    cellValues[cellX][cellY].blue * numColorLevelsPerGene + ')';
             populationContext.fillRect(cellX * cellWidth, cellY * cellHeight, cellWidth, cellHeight);
-            if (cellValues[cellX][cellY].dot) {
-               populationContext.beginPath();
-               populationContext.arc((cellX + 0.5) * cellWidth, (cellY + 0.5) * cellHeight, (cellWidth + cellHeight) / 16, 0, 2 * Math.PI, false);
-               populationContext.fillStyle = 'rgb(0, 0, 0)';
-               populationContext.fill();
-               populationContext.beginPath();
-               populationContext.arc((cellX + 0.5) * cellWidth, (cellY + 0.5) * cellHeight, (cellWidth + cellHeight) / 20, 0, 2 * Math.PI, false);
-               populationContext.fillStyle = 'rgb(255, 255, 255)';
-               populationContext.fill();
-            }
          }
       }
 
@@ -115,23 +115,19 @@ var startPopulation = function () {
             averageCellValue.red += cellValues[cellX][cellY].red;
             averageCellValue.green += cellValues[cellX][cellY].green;
             averageCellValue.blue += cellValues[cellX][cellY].blue;
-            if (cellValues[cellX][cellY].dot) {
-               averageCellValue.dot += 1;
-            }
          }
       }
       averageCellValue.red /= numCellsWide * numCellsTall;
       averageCellValue.green /= numCellsWide * numCellsTall;
       averageCellValue.blue /= numCellsWide * numCellsTall;
-      averageCellValue.dot /= numCellsWide * numCellsTall;
       averageOrganismElement.style.backgroundColor = 'rgb(' + Math.round(averageCellValue.red * numColorLevelsPerGene) + ', ' +
-                                                      Math.round(averageCellValue.green * numColorLevelsPerGene) + ', ' +
-                                                      Math.round(averageCellValue.blue * numColorLevelsPerGene) + ')';
+                                                     Math.round(averageCellValue.green * numColorLevelsPerGene) + ', ' +
+                                                     Math.round(averageCellValue.blue * numColorLevelsPerGene) + ')';
       farthestFromAverage = 2 * (averageCellValue.red + averageCellValue.green + averageCellValue.blue) * numColorLevelsPerGene > 3 * highestColorLevel ? 0 : highestColorLevel;
       averageOrganismElement.style.color = 'rgb(' + farthestFromAverage + ', ' + farthestFromAverage + ', ' + farthestFromAverage + ')';
       averageOrganismElement.innerHTML = '<div>C on first move: ' + (averageCellValue.blue * 100 / highestGeneValue).toFixed(2) + '%</div>' +
-                                 '<div>C after other&rsquo;s C: ' + (averageCellValue.green * 100 / highestGeneValue).toFixed(2) + '%</div>' +
-                                 '<div>C after other&rsquo;s D: ' + (averageCellValue.red * 100 / highestGeneValue).toFixed(2) + '%</div>';
+                                         '<div>C after other&rsquo;s C: ' + (averageCellValue.green * 100 / highestGeneValue).toFixed(2) + '%</div>' +
+                                         '<div>C after other&rsquo;s D: ' + (averageCellValue.red * 100 / highestGeneValue).toFixed(2) + '%</div>';
    };
 
    var agentReactor = function (organism, historyFocal, historyOpponent) {
@@ -215,26 +211,6 @@ var startPopulation = function () {
    agentFuncs.push(agentNiceDelayedPavlov);
    agentFuncs.push(agentNastyDelayedPavlov);
 
-   var gamePayoff = function (self, other) {
-      return self === 0 ? other === 0 ? payoffReward : payoffSucker : other === 0 ? payoffTemptation : payoffPunishment;
-   };
-
-   var playIpd = function (agent0, agent1, numRounds) {
-      var whichRound;
-      var history = [[], []];
-      var strat = [];
-      var totals = [0, 0];
-      for (whichRound = 0; whichRound < numRounds; whichRound += 1) {
-         strat[0] = agentReactor(agent0, history[0], history[1]);
-         strat[1] = agentReactor(agent1, history[1], history[0]);
-         history[0].push(strat[0]);
-         history[1].push(strat[1]);
-         totals[0] += gamePayoff(strat[0], strat[1]);
-         totals[1] += gamePayoff(strat[1], strat[0]);
-      }
-      return totals;
-   };
-
    var chooseIndexProbabilistically = function (scores) {
       var whichCell, randNum;
       var totalAdjScore = 0;
@@ -261,8 +237,28 @@ var startPopulation = function () {
       return null;
    };
 
+   var gamePayoff = function (self, other) {
+      return self === 0 ? other === 0 ? payoffReward : payoffSucker : other === 0 ? payoffTemptation : payoffPunishment;
+   };
+
+   var playGame = function (agent0, agent1, numRounds) {
+      var whichRound;
+      var history = [[], []];
+      var strat = [];
+      var totals = [0, 0];
+      for (whichRound = 0; whichRound < numRounds; whichRound += 1) {
+         strat[0] = agentReactor(agent0, history[0], history[1]);
+         strat[1] = agentReactor(agent1, history[1], history[0]);
+         history[0].push(strat[0]);
+         history[1].push(strat[1]);
+         totals[0] += gamePayoff(strat[0], strat[1]);
+         totals[1] += gamePayoff(strat[1], strat[0]);
+      }
+      return totals;
+   };
+
    var advanceGenerationGame = function () {
-      var bestCellValue, bestCellValues, bestScore, cellScore, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, localCells, localCellValues, mask, points, scores, whichCell, whichGene;
+      var bestCellValue, bestCellValues, bestScore, cellScore, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, chosenCellValue, localCells, localCellValues, mask, points, scores, whichCell, whichGene;
       var cellScores = [];
       var newCellValues = [];
 
@@ -288,34 +284,34 @@ var startPopulation = function () {
          }
       }
 
-      // play IPD in pairs
+      // play 2x2 game in pairs
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
          for (cellY = 0; cellY < numCellsTall; cellY += 1) {
             cellXRight = (cellX + 1) % numCellsWide;
             cellYUp = (cellY + numCellsTall - 1) % numCellsTall;
             cellYDown = (cellY + 1) % numCellsTall;
             if (interactionNeighborRightUpCheckbox.checked) {
-               points = playIpd(cellValues[cellX][cellY], cellValues[cellXRight][cellYUp], numRoundsPerEncounter);
+               points = playGame(cellValues[cellX][cellY], cellValues[cellXRight][cellYUp], numRoundsPerEncounter);
                cellScores[cellX][cellY] += points[0];
                cellScores[cellXRight][cellYUp] += points[1];
             }
             if (interactionNeighborRightCheckbox.checked) {
-               points = playIpd(cellValues[cellX][cellY], cellValues[cellXRight][cellY], numRoundsPerEncounter);
+               points = playGame(cellValues[cellX][cellY], cellValues[cellXRight][cellY], numRoundsPerEncounter);
                cellScores[cellX][cellY] += points[0];
                cellScores[cellXRight][cellY] += points[1];
             }
             if (interactionNeighborRightDownCheckbox.checked) {
-               points = playIpd(cellValues[cellX][cellY], cellValues[cellXRight][cellYDown], numRoundsPerEncounter);
+               points = playGame(cellValues[cellX][cellY], cellValues[cellXRight][cellYDown], numRoundsPerEncounter);
                cellScores[cellX][cellY] += points[0];
                cellScores[cellXRight][cellYDown] += points[1];
             }
             if (interactionNeighborDownCheckbox.checked) {
-               points = playIpd(cellValues[cellX][cellY], cellValues[cellX][cellYDown], numRoundsPerEncounter);
+               points = playGame(cellValues[cellX][cellY], cellValues[cellX][cellYDown], numRoundsPerEncounter);
                cellScores[cellX][cellY] += points[0];
                cellScores[cellX][cellYDown] += points[1];
             }
             if (interactionNeighborSelfCheckbox.checked) {
-               points = playIpd(cellValues[cellX][cellY], cellValues[cellX][cellY], numRoundsPerEncounter);
+               points = playGame(cellValues[cellX][cellY], cellValues[cellX][cellY], numRoundsPerEncounter);
                cellScores[cellX][cellY] += (points[0] + points[1]) / 2;
             }
          }
@@ -362,14 +358,12 @@ var startPopulation = function () {
                   newCellValues[cellX][cellY].red = bestCellValue.red;
                   newCellValues[cellX][cellY].green = bestCellValue.green;
                   newCellValues[cellX][cellY].blue = bestCellValue.blue;
-                  newCellValues[cellX][cellY].dot = bestCellValue.dot;
                } else {
                   // asexual; better tend to get picked
-                  var chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
                   newCellValues[cellX][cellY].red = chosenCellValue.red;
                   newCellValues[cellX][cellY].green = chosenCellValue.green;
                   newCellValues[cellX][cellY].blue = chosenCellValue.blue;
-                  newCellValues[cellX][cellY].dot = chosenCellValue.dot;
                }
             } else if (reproductionMeans === 'sexualchromosome') {
                if (reproductionSelection === 'deterministic') {
@@ -377,15 +371,13 @@ var startPopulation = function () {
                   newCellValues[cellX][cellY].red = Math.random() < 0.5 ? cellValues[cellX][cellY].red : bestCellValue.red;
                   newCellValues[cellX][cellY].green = Math.random() < 0.5 ? cellValues[cellX][cellY].green : bestCellValue.green;
                   newCellValues[cellX][cellY].blue = Math.random() < 0.5 ? cellValues[cellX][cellY].blue : bestCellValue.blue;
-                  newCellValues[cellX][cellY].dot = Math.random() < 0.5 ? cellValues[cellX][cellY].dot : bestCellValue.dot;
                } else {
                   // sexual at chromosome level; better tend to get picked
                   newCellValues[cellX][cellY].red = localCellValues[chooseIndexProbabilistically(scores)].red;
                   newCellValues[cellX][cellY].green = localCellValues[chooseIndexProbabilistically(scores)].green;
                   newCellValues[cellX][cellY].blue = localCellValues[chooseIndexProbabilistically(scores)].blue;
-                  newCellValues[cellX][cellY].dot = localCellValues[chooseIndexProbabilistically(scores)].dot;
                }
-            } else {
+            } else if (reproductionMeans === 'sexualgene') {
                if (reproductionSelection === 'deterministic') {
                   // sexual at gene level; best always gets picked
                   mask = Math.floor(Math.random() * numGeneValues);
@@ -394,7 +386,6 @@ var startPopulation = function () {
                   newCellValues[cellX][cellY].green = mask & cellValues[cellX][cellY].green | ~mask & bestCellValue.green;
                   mask = Math.floor(Math.random() * numGeneValues);
                   newCellValues[cellX][cellY].blue = mask & cellValues[cellX][cellY].blue | ~mask & bestCellValue.blue;
-                  newCellValues[cellX][cellY].dot = Math.random() < 0.5 ? cellValues[cellX][cellY].dot : bestCellValue.dot;
                } else {
                   // sexual at gene level; better tend to get picked
                   newCellValues[cellX][cellY].red = 0;
@@ -405,7 +396,45 @@ var startPopulation = function () {
                      newCellValues[cellX][cellY].green |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].green;
                      newCellValues[cellX][cellY].blue |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].blue;
                   }
-                  newCellValues[cellX][cellY].dot = localCellValues[chooseIndexProbabilistically(scores)].dot;
+               }
+            } else {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual with blending; best always gets picked
+                  if (cellValues[cellX][cellY].red > bestCellValue.red) {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (cellValues[cellX][cellY].red - bestCellValue.red + 1)) + bestCellValue.red;
+                  } else {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (bestCellValue.red - cellValues[cellX][cellY].red + 1)) + cellValues[cellX][cellY].red;
+                  }
+                  if (cellValues[cellX][cellY].green > bestCellValue.green) {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (cellValues[cellX][cellY].green - bestCellValue.green + 1)) + bestCellValue.green;
+                  } else {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (bestCellValue.green - cellValues[cellX][cellY].green + 1)) + cellValues[cellX][cellY].green;
+                  }
+                  if (cellValues[cellX][cellY].blue > bestCellValue.blue) {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (cellValues[cellX][cellY].blue - bestCellValue.blue + 1)) + bestCellValue.blue;
+                  } else {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (bestCellValue.blue - cellValues[cellX][cellY].blue + 1)) + cellValues[cellX][cellY].blue;
+                  }
+               } else {
+                  // sexual with blending; better tend to get picked
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].red > chosenCellValue.red) {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (cellValues[cellX][cellY].red - chosenCellValue.red + 1)) + chosenCellValue.red;
+                  } else {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (chosenCellValue.red - cellValues[cellX][cellY].red + 1)) + cellValues[cellX][cellY].red;
+                  }
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].green > chosenCellValue.green) {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (cellValues[cellX][cellY].green - chosenCellValue.green + 1)) + chosenCellValue.green;
+                  } else {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (chosenCellValue.green - cellValues[cellX][cellY].green + 1)) + cellValues[cellX][cellY].green;
+                  }
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].blue > chosenCellValue.blue) {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (cellValues[cellX][cellY].blue - chosenCellValue.blue + 1)) + chosenCellValue.blue;
+                  } else {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (chosenCellValue.blue - cellValues[cellX][cellY].blue + 1)) + cellValues[cellX][cellY].blue;
+                  }
                }
             }
          }
@@ -414,7 +443,689 @@ var startPopulation = function () {
       // make new cell values current cell values
       cellValues = newCellValues;
    };
-   advanceGeneration = advanceGenerationGame;
+
+   var playPoker = function (agent0, agent1, numRounds) {
+      var bet0, bet1, card0, card1, whichRound;
+      var numCards = 4;
+      var anteAmount = 2;
+      var betAmount = 4;
+      var totals = [0, 0];
+      for (whichRound = 0; whichRound < numRounds; whichRound += 1) {
+         card0 = Math.floor(Math.random() * numCards);
+         card1 = Math.floor(Math.random() * numCards);
+         bet0 = Math.floor(Math.random() * highestGeneValue) < [agent0.red, agent0.green, agent0.blue, highestGeneValue][card0] ? betAmount : anteAmount;
+         bet1 = Math.floor(Math.random() * highestGeneValue) < [agent1.red, agent1.green, agent1.blue, highestGeneValue][card1] ? betAmount : anteAmount;
+         if (bet0 > bet1) {
+            totals[0] += bet1;
+            totals[1] -= bet1;
+         } else if (bet0 < bet1) {
+            totals[0] -= bet0;
+            totals[1] += bet0;
+         } else if (card0 > card1) {
+            totals[0] += bet0;
+            totals[1] -= bet1;
+         } else if (card0 < card1) {
+            totals[0] -= bet0;
+            totals[1] += bet1;
+         }
+      }
+      return totals;
+   };
+
+   var advanceGenerationPoker = function () {
+      // level of blue is how likely to bet (or how much to bet) when you have a 3 card
+      // level of green is how likely to bet (or how much to bet) when you have a 2 card
+      // level of red is how likely to bet (or how much to bet) when you have a 1 card
+      // maybe have a 4 card; always bet maximum with it
+      // ante is always 1
+      // allow user to choose constant bet amount
+      // allow user to choose number of hands played per matchup
+      var bestCellValue, bestCellValues, bestScore, cellScore, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, chosenCellValue, localCells, localCellValues, mask, points, scores, whichCell, whichGene;
+      var cellScores = [];
+      var newCellValues = [];
+
+      var numEncountersPerMatchup = 1;
+      var mutationProbability = 0.002;
+
+      // initialize scores and mutate some cells
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         cellScores[cellX] = [];
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellScores[cellX][cellY] = 0;
+            for (whichGene = 0; whichGene < numGenesOnChromosome; whichGene += 1) {
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].red ^= 1 << whichGene;
+               }
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].green ^= 1 << whichGene;
+               }
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].blue ^= 1 << whichGene;
+               }
+            }
+         }
+      }
+
+      // play one-card poker in pairs
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellXRight = (cellX + 1) % numCellsWide;
+            cellYUp = (cellY + numCellsTall - 1) % numCellsTall;
+            cellYDown = (cellY + 1) % numCellsTall;
+            if (interactionNeighborRightUpCheckbox.checked) {
+               points = playPoker(cellValues[cellX][cellY], cellValues[cellXRight][cellYUp], numRoundsPerEncounter);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellXRight][cellYUp] += points[1];
+            }
+            if (interactionNeighborRightCheckbox.checked) {
+               points = playPoker(cellValues[cellX][cellY], cellValues[cellXRight][cellY], numRoundsPerEncounter);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellXRight][cellY] += points[1];
+            }
+            if (interactionNeighborRightDownCheckbox.checked) {
+               points = playPoker(cellValues[cellX][cellY], cellValues[cellXRight][cellYDown], numRoundsPerEncounter);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellXRight][cellYDown] += points[1];
+            }
+            if (interactionNeighborDownCheckbox.checked) {
+               points = playPoker(cellValues[cellX][cellY], cellValues[cellX][cellYDown], numRoundsPerEncounter);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellX][cellYDown] += points[1];
+            }
+            if (interactionNeighborSelfCheckbox.checked) {
+               points = playPoker(cellValues[cellX][cellY], cellValues[cellX][cellY], numRoundsPerEncounter);
+               cellScores[cellX][cellY] += (points[0] + points[1]) / 2;
+            }
+         }
+      }
+
+      // calculate new cell values
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         newCellValues[cellX] = [];
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellXLeft = (cellX + numCellsWide - 1) % numCellsWide;
+            cellXRight = (cellX + 1) % numCellsWide;
+            cellYUp = (cellY + numCellsTall - 1) % numCellsTall;
+            cellYDown = (cellY + 1) % numCellsTall;
+            localCells = [
+               [cellXLeft, cellYDown],
+               [cellXLeft, cellY],
+               [cellX, cellYUp],
+               [cellXRight, cellYUp],
+               [cellXRight, cellY],
+               [cellX, cellYDown],
+               [cellX, cellY]
+            ];
+            bestScore = Number.NEGATIVE_INFINITY;
+            scores = [];
+            localCellValues = [];
+            for (whichCell = 0; whichCell < localCells.length; whichCell += 1) {
+               cellScore = cellScores[localCells[whichCell][0]][localCells[whichCell][1]];
+               scores.push(cellScore);
+               localCellValues.push(cellValues[localCells[whichCell][0]][localCells[whichCell][1]]);
+               if (cellScore > bestScore) {
+                  bestCellValues = [cellValues[localCells[whichCell][0]][localCells[whichCell][1]]];
+                  bestScore = cellScore;
+               } else if (cellScore === bestScore) {
+                  bestCellValues.push(cellValues[localCells[whichCell][0]][localCells[whichCell][1]]);
+               }
+            }
+
+            bestCellValue = bestCellValues[Math.floor(Math.random() * bestCellValues.length)];
+            newCellValues[cellX][cellY] = {};
+
+            if (reproductionMeans === 'asexual') {
+               if (reproductionSelection === 'deterministic') {
+                  // asexual; best always gets picked
+                  newCellValues[cellX][cellY].red = bestCellValue.red;
+                  newCellValues[cellX][cellY].green = bestCellValue.green;
+                  newCellValues[cellX][cellY].blue = bestCellValue.blue;
+               } else {
+                  // asexual; better tend to get picked
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  newCellValues[cellX][cellY].red = chosenCellValue.red;
+                  newCellValues[cellX][cellY].green = chosenCellValue.green;
+                  newCellValues[cellX][cellY].blue = chosenCellValue.blue;
+               }
+            } else if (reproductionMeans === 'sexualchromosome') {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual at chromosome level; best always gets picked
+                  newCellValues[cellX][cellY].red = Math.random() < 0.5 ? cellValues[cellX][cellY].red : bestCellValue.red;
+                  newCellValues[cellX][cellY].green = Math.random() < 0.5 ? cellValues[cellX][cellY].green : bestCellValue.green;
+                  newCellValues[cellX][cellY].blue = Math.random() < 0.5 ? cellValues[cellX][cellY].blue : bestCellValue.blue;
+               } else {
+                  // sexual at chromosome level; better tend to get picked
+                  newCellValues[cellX][cellY].red = localCellValues[chooseIndexProbabilistically(scores)].red;
+                  newCellValues[cellX][cellY].green = localCellValues[chooseIndexProbabilistically(scores)].green;
+                  newCellValues[cellX][cellY].blue = localCellValues[chooseIndexProbabilistically(scores)].blue;
+               }
+            } else if (reproductionMeans === 'sexualgene') {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual at gene level; best always gets picked
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].red = mask & cellValues[cellX][cellY].red | ~mask & bestCellValue.red;
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].green = mask & cellValues[cellX][cellY].green | ~mask & bestCellValue.green;
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].blue = mask & cellValues[cellX][cellY].blue | ~mask & bestCellValue.blue;
+               } else {
+                  // sexual at gene level; better tend to get picked
+                  newCellValues[cellX][cellY].red = 0;
+                  newCellValues[cellX][cellY].green = 0;
+                  newCellValues[cellX][cellY].blue = 0;
+                  for (whichGene = 0; whichGene < numGenesOnChromosome; whichGene += 1) {
+                     newCellValues[cellX][cellY].red |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].red;
+                     newCellValues[cellX][cellY].green |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].green;
+                     newCellValues[cellX][cellY].blue |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].blue;
+                  }
+               }
+            } else {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual with blending; best always gets picked
+                  if (cellValues[cellX][cellY].red > bestCellValue.red) {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (cellValues[cellX][cellY].red - bestCellValue.red + 1)) + bestCellValue.red;
+                  } else {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (bestCellValue.red - cellValues[cellX][cellY].red + 1)) + cellValues[cellX][cellY].red;
+                  }
+                  if (cellValues[cellX][cellY].green > bestCellValue.green) {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (cellValues[cellX][cellY].green - bestCellValue.green + 1)) + bestCellValue.green;
+                  } else {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (bestCellValue.green - cellValues[cellX][cellY].green + 1)) + cellValues[cellX][cellY].green;
+                  }
+                  if (cellValues[cellX][cellY].blue > bestCellValue.blue) {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (cellValues[cellX][cellY].blue - bestCellValue.blue + 1)) + bestCellValue.blue;
+                  } else {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (bestCellValue.blue - cellValues[cellX][cellY].blue + 1)) + cellValues[cellX][cellY].blue;
+                  }
+               } else {
+                  // sexual with blending; better tend to get picked
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].red > chosenCellValue.red) {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (cellValues[cellX][cellY].red - chosenCellValue.red + 1)) + chosenCellValue.red;
+                  } else {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (chosenCellValue.red - cellValues[cellX][cellY].red + 1)) + cellValues[cellX][cellY].red;
+                  }
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].green > chosenCellValue.green) {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (cellValues[cellX][cellY].green - chosenCellValue.green + 1)) + chosenCellValue.green;
+                  } else {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (chosenCellValue.green - cellValues[cellX][cellY].green + 1)) + cellValues[cellX][cellY].green;
+                  }
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].blue > chosenCellValue.blue) {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (cellValues[cellX][cellY].blue - chosenCellValue.blue + 1)) + chosenCellValue.blue;
+                  } else {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (chosenCellValue.blue - cellValues[cellX][cellY].blue + 1)) + cellValues[cellX][cellY].blue;
+                  }
+               }
+            }
+         }
+      }
+
+      // make new cell values current cell values
+      cellValues = newCellValues;
+   };
+
+   var playAuction = function (agent0, agent1) {
+      var redResourceValue = 1 * highestGeneValue / 5;
+      var greenResourceValue = 2 * highestGeneValue / 5;
+      var blueResourceValue = 3 * highestGeneValue / 5;
+      var onlyWinnerPays = false;
+      var payLosingBid = true;
+      var totals = [0, 0];
+      if (agent0.red > agent1.red) {
+         totals[0] -= payLosingBid ? agent1.red : agent0.red;
+         totals[1] -= onlyWinnerPays ? 0 : agent1.red;
+         totals[0] += redResourceValue;
+      } else if (agent0.red < agent1.red) {
+         totals[0] -= onlyWinnerPays ? 0 : agent0.red;
+         totals[1] -= payLosingBid ? agent0.red : agent1.red;
+         totals[1] += redResourceValue;
+      } else {
+         totals[0] -= ((payLosingBid ? agent1.red : agent0.red) + (onlyWinnerPays ? 0 : agent0.red)) / 2;
+         totals[1] -= ((payLosingBid ? agent0.red : agent1.red) + (onlyWinnerPays ? 0 : agent1.red)) / 2;
+         totals[0] += redResourceValue / 2;
+         totals[1] += redResourceValue / 2;
+      }
+      if (agent0.green > agent1.green) {
+         totals[0] -= payLosingBid ? agent1.green : agent0.green;
+         totals[1] -= onlyWinnerPays ? 0 : agent1.green;
+         totals[0] += greenResourceValue;
+      } else if (agent0.green < agent1.green) {
+         totals[0] -= onlyWinnerPays ? 0 : agent0.green;
+         totals[1] -= payLosingBid ? agent0.green : agent1.green;
+         totals[1] += greenResourceValue;
+      } else {
+         totals[0] -= ((payLosingBid ? agent1.green : agent0.green) + (onlyWinnerPays ? 0 : agent0.green)) / 2;
+         totals[1] -= ((payLosingBid ? agent0.green : agent1.green) + (onlyWinnerPays ? 0 : agent1.green)) / 2;
+         totals[0] += greenResourceValue / 2;
+         totals[1] += greenResourceValue / 2;
+      }
+      if (agent0.blue > agent1.blue) {
+         totals[0] -= payLosingBid ? agent1.blue : agent0.blue;
+         totals[1] -= onlyWinnerPays ? 0 : agent1.blue;
+         totals[0] += blueResourceValue;
+      } else if (agent0.blue < agent1.blue) {
+         totals[0] -= onlyWinnerPays ? 0 : agent0.blue;
+         totals[1] -= payLosingBid ? agent0.blue : agent1.blue;
+         totals[1] += blueResourceValue;
+      } else {
+         totals[0] -= ((payLosingBid ? agent1.blue : agent0.blue) + (onlyWinnerPays ? 0 : agent0.blue)) / 2;
+         totals[1] -= ((payLosingBid ? agent0.blue : agent1.blue) + (onlyWinnerPays ? 0 : agent1.blue)) / 2;
+         totals[0] += blueResourceValue / 2;
+         totals[1] += blueResourceValue / 2;
+      }
+      return totals;
+   };
+
+   var advanceGenerationAuction = function () {
+      var bestCellValue, bestCellValues, bestScore, cellScore, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, chosenCellValue, localCells, localCellValues, mask, points, scores, whichCell, whichGene;
+      var cellScores = [];
+      var newCellValues = [];
+
+      var mutationProbability = 0.002;
+
+      // initialize scores and mutate some cells
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         cellScores[cellX] = [];
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellScores[cellX][cellY] = 0;
+            for (whichGene = 0; whichGene < numGenesOnChromosome; whichGene += 1) {
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].red ^= 1 << whichGene;
+               }
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].green ^= 1 << whichGene;
+               }
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].blue ^= 1 << whichGene;
+               }
+            }
+         }
+      }
+
+      // play auction game in pairs
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellXRight = (cellX + 1) % numCellsWide;
+            cellYUp = (cellY + numCellsTall - 1) % numCellsTall;
+            cellYDown = (cellY + 1) % numCellsTall;
+            if (interactionNeighborRightUpCheckbox.checked) {
+               points = playAuction(cellValues[cellX][cellY], cellValues[cellXRight][cellYUp]);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellXRight][cellYUp] += points[1];
+            }
+            if (interactionNeighborRightCheckbox.checked) {
+               points = playAuction(cellValues[cellX][cellY], cellValues[cellXRight][cellY]);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellXRight][cellY] += points[1];
+            }
+            if (interactionNeighborRightDownCheckbox.checked) {
+               points = playAuction(cellValues[cellX][cellY], cellValues[cellXRight][cellYDown]);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellXRight][cellYDown] += points[1];
+            }
+            if (interactionNeighborDownCheckbox.checked) {
+               points = playAuction(cellValues[cellX][cellY], cellValues[cellX][cellYDown]);
+               cellScores[cellX][cellY] += points[0];
+               cellScores[cellX][cellYDown] += points[1];
+            }
+            if (interactionNeighborSelfCheckbox.checked) {
+               points = playAuction(cellValues[cellX][cellY], cellValues[cellX][cellY]);
+               cellScores[cellX][cellY] += (points[0] + points[1]) / 2;
+            }
+         }
+      }
+
+      // calculate new cell values
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         newCellValues[cellX] = [];
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellXLeft = (cellX + numCellsWide - 1) % numCellsWide;
+            cellXRight = (cellX + 1) % numCellsWide;
+            cellYUp = (cellY + numCellsTall - 1) % numCellsTall;
+            cellYDown = (cellY + 1) % numCellsTall;
+            localCells = [
+               [cellXLeft, cellYDown],
+               [cellXLeft, cellY],
+               [cellX, cellYUp],
+               [cellXRight, cellYUp],
+               [cellXRight, cellY],
+               [cellX, cellYDown],
+               [cellX, cellY]
+            ];
+            bestScore = Number.NEGATIVE_INFINITY;
+            scores = [];
+            localCellValues = [];
+            for (whichCell = 0; whichCell < localCells.length; whichCell += 1) {
+               cellScore = cellScores[localCells[whichCell][0]][localCells[whichCell][1]];
+               scores.push(cellScore);
+               localCellValues.push(cellValues[localCells[whichCell][0]][localCells[whichCell][1]]);
+               if (cellScore > bestScore) {
+                  bestCellValues = [cellValues[localCells[whichCell][0]][localCells[whichCell][1]]];
+                  bestScore = cellScore;
+               } else if (cellScore === bestScore) {
+                  bestCellValues.push(cellValues[localCells[whichCell][0]][localCells[whichCell][1]]);
+               }
+            }
+
+            bestCellValue = bestCellValues[Math.floor(Math.random() * bestCellValues.length)];
+            newCellValues[cellX][cellY] = {};
+
+            if (reproductionMeans === 'asexual') {
+               if (reproductionSelection === 'deterministic') {
+                  // asexual; best always gets picked
+                  newCellValues[cellX][cellY].red = bestCellValue.red;
+                  newCellValues[cellX][cellY].green = bestCellValue.green;
+                  newCellValues[cellX][cellY].blue = bestCellValue.blue;
+               } else {
+                  // asexual; better tend to get picked
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  newCellValues[cellX][cellY].red = chosenCellValue.red;
+                  newCellValues[cellX][cellY].green = chosenCellValue.green;
+                  newCellValues[cellX][cellY].blue = chosenCellValue.blue;
+               }
+            } else if (reproductionMeans === 'sexualchromosome') {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual at chromosome level; best always gets picked
+                  newCellValues[cellX][cellY].red = Math.random() < 0.5 ? cellValues[cellX][cellY].red : bestCellValue.red;
+                  newCellValues[cellX][cellY].green = Math.random() < 0.5 ? cellValues[cellX][cellY].green : bestCellValue.green;
+                  newCellValues[cellX][cellY].blue = Math.random() < 0.5 ? cellValues[cellX][cellY].blue : bestCellValue.blue;
+               } else {
+                  // sexual at chromosome level; better tend to get picked
+                  newCellValues[cellX][cellY].red = localCellValues[chooseIndexProbabilistically(scores)].red;
+                  newCellValues[cellX][cellY].green = localCellValues[chooseIndexProbabilistically(scores)].green;
+                  newCellValues[cellX][cellY].blue = localCellValues[chooseIndexProbabilistically(scores)].blue;
+               }
+            } else if (reproductionMeans === 'sexualgene') {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual at gene level; best always gets picked
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].red = mask & cellValues[cellX][cellY].red | ~mask & bestCellValue.red;
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].green = mask & cellValues[cellX][cellY].green | ~mask & bestCellValue.green;
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].blue = mask & cellValues[cellX][cellY].blue | ~mask & bestCellValue.blue;
+               } else {
+                  // sexual at gene level; better tend to get picked
+                  newCellValues[cellX][cellY].red = 0;
+                  newCellValues[cellX][cellY].green = 0;
+                  newCellValues[cellX][cellY].blue = 0;
+                  for (whichGene = 0; whichGene < numGenesOnChromosome; whichGene += 1) {
+                     newCellValues[cellX][cellY].red |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].red;
+                     newCellValues[cellX][cellY].green |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].green;
+                     newCellValues[cellX][cellY].blue |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].blue;
+                  }
+               }
+            } else {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual with blending; best always gets picked
+                  if (cellValues[cellX][cellY].red > bestCellValue.red) {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (cellValues[cellX][cellY].red - bestCellValue.red + 1)) + bestCellValue.red;
+                  } else {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (bestCellValue.red - cellValues[cellX][cellY].red + 1)) + cellValues[cellX][cellY].red;
+                  }
+                  if (cellValues[cellX][cellY].green > bestCellValue.green) {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (cellValues[cellX][cellY].green - bestCellValue.green + 1)) + bestCellValue.green;
+                  } else {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (bestCellValue.green - cellValues[cellX][cellY].green + 1)) + cellValues[cellX][cellY].green;
+                  }
+                  if (cellValues[cellX][cellY].blue > bestCellValue.blue) {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (cellValues[cellX][cellY].blue - bestCellValue.blue + 1)) + bestCellValue.blue;
+                  } else {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (bestCellValue.blue - cellValues[cellX][cellY].blue + 1)) + cellValues[cellX][cellY].blue;
+                  }
+               } else {
+                  // sexual with blending; better tend to get picked
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].red > chosenCellValue.red) {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (cellValues[cellX][cellY].red - chosenCellValue.red + 1)) + chosenCellValue.red;
+                  } else {
+                     newCellValues[cellX][cellY].red = Math.floor(Math.random() * (chosenCellValue.red - cellValues[cellX][cellY].red + 1)) + cellValues[cellX][cellY].red;
+                  }
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].green > chosenCellValue.green) {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (cellValues[cellX][cellY].green - chosenCellValue.green + 1)) + chosenCellValue.green;
+                  } else {
+                     newCellValues[cellX][cellY].green = Math.floor(Math.random() * (chosenCellValue.green - cellValues[cellX][cellY].green + 1)) + cellValues[cellX][cellY].green;
+                  }
+                  chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  if (cellValues[cellX][cellY].blue > chosenCellValue.blue) {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (cellValues[cellX][cellY].blue - chosenCellValue.blue + 1)) + chosenCellValue.blue;
+                  } else {
+                     newCellValues[cellX][cellY].blue = Math.floor(Math.random() * (chosenCellValue.blue - cellValues[cellX][cellY].blue + 1)) + cellValues[cellX][cellY].blue;
+                  }
+               }
+            }
+         }
+      }
+
+      // make new cell values current cell values
+      cellValues = newCellValues;
+   };
+
+   var playMate = function (agent0, agent1) {
+      var redResourceValue = 1 * highestGeneValue / 5;
+      var greenResourceValue = 2 * highestGeneValue / 5;
+      var blueResourceValue = 3 * highestGeneValue / 5;
+      var onlyWinnerPays = false;
+      var payLosingBid = true;
+      var totals = [0, 0];
+      if (agent0.red > agent1.red) {
+         totals[0] -= payLosingBid ? agent1.red : agent0.red;
+         totals[1] -= onlyWinnerPays ? 0 : agent1.red;
+         totals[0] += redResourceValue;
+      } else if (agent0.red < agent1.red) {
+         totals[0] -= onlyWinnerPays ? 0 : agent0.red;
+         totals[1] -= payLosingBid ? agent0.red : agent1.red;
+         totals[1] += redResourceValue;
+      } else {
+         totals[0] -= ((payLosingBid ? agent1.red : agent0.red) + (onlyWinnerPays ? 0 : agent0.red)) / 2;
+         totals[1] -= ((payLosingBid ? agent0.red : agent1.red) + (onlyWinnerPays ? 0 : agent1.red)) / 2;
+         totals[0] += redResourceValue / 2;
+         totals[1] += redResourceValue / 2;
+      }
+      if (agent0.green > agent1.green) {
+         totals[0] -= payLosingBid ? agent1.green : agent0.green;
+         totals[1] -= onlyWinnerPays ? 0 : agent1.green;
+         totals[0] += greenResourceValue;
+      } else if (agent0.green < agent1.green) {
+         totals[0] -= onlyWinnerPays ? 0 : agent0.green;
+         totals[1] -= payLosingBid ? agent0.green : agent1.green;
+         totals[1] += greenResourceValue;
+      } else {
+         totals[0] -= ((payLosingBid ? agent1.green : agent0.green) + (onlyWinnerPays ? 0 : agent0.green)) / 2;
+         totals[1] -= ((payLosingBid ? agent0.green : agent1.green) + (onlyWinnerPays ? 0 : agent1.green)) / 2;
+         totals[0] += greenResourceValue / 2;
+         totals[1] += greenResourceValue / 2;
+      }
+      if (agent0.blue > agent1.blue) {
+         totals[0] -= payLosingBid ? agent1.blue : agent0.blue;
+         totals[1] -= onlyWinnerPays ? 0 : agent1.blue;
+         totals[0] += blueResourceValue;
+      } else if (agent0.blue < agent1.blue) {
+         totals[0] -= onlyWinnerPays ? 0 : agent0.blue;
+         totals[1] -= payLosingBid ? agent0.blue : agent1.blue;
+         totals[1] += blueResourceValue;
+      } else {
+         totals[0] -= ((payLosingBid ? agent1.blue : agent0.blue) + (onlyWinnerPays ? 0 : agent0.blue)) / 2;
+         totals[1] -= ((payLosingBid ? agent0.blue : agent1.blue) + (onlyWinnerPays ? 0 : agent1.blue)) / 2;
+         totals[0] += blueResourceValue / 2;
+         totals[1] += blueResourceValue / 2;
+      }
+      return totals;
+   };
+
+   var advanceGenerationMate = function () {
+      var bestCellValue, bestCellValues, bestScore, cellScore, cellValue, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, centralCellValue, localCells, localCellValues, mask, scores, whichCell, whichGene;
+      var cellScores = [];
+      var newCellValues = [];
+      var sameColorWeight = 0.75;
+
+      var numEncountersPerMatchup = 1;
+      var mutationProbability = 0.002;
+
+      // initialize scores and mutate some cells
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         cellScores[cellX] = [];
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            cellScores[cellX][cellY] = 0;
+            for (whichGene = 0; whichGene < numGenesOnChromosome; whichGene += 1) {
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].red ^= 1 << whichGene;
+               }
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].green ^= 1 << whichGene;
+               }
+               if (Math.random() < mutationProbability) {
+                  cellValues[cellX][cellY].blue ^= 1 << whichGene;
+               }
+            }
+         }
+      }
+
+      // calculate new cell values
+      for (cellX = 0; cellX < numCellsWide; cellX += 1) {
+         newCellValues[cellX] = [];
+         for (cellY = 0; cellY < numCellsTall; cellY += 1) {
+            centralCellValue = cellValues[cellX][cellY];
+            cellXLeft = (cellX + numCellsWide - 1) % numCellsWide;
+            cellXRight = (cellX + 1) % numCellsWide;
+            cellYUp = (cellY + numCellsTall - 1) % numCellsTall;
+            cellYDown = (cellY + 1) % numCellsTall;
+            localCells = [
+               [cellXLeft, cellYDown],
+               [cellXLeft, cellY],
+               [cellX, cellYUp],
+               [cellXRight, cellYUp],
+               [cellXRight, cellY],
+               [cellX, cellYDown],
+               [cellX, cellY]
+            ];
+            bestScore = Number.NEGATIVE_INFINITY;
+            scores = [];
+            localCellValues = [];
+            for (whichCell = 0; whichCell < localCells.length; whichCell += 1) {
+               cellScore = 0;
+               cellValue = cellValues[localCells[whichCell][0]][localCells[whichCell][1]];
+               cellScore -= 2 * sameColorWeight * (centralCellValue.red - cellValue.red) * (centralCellValue.red - cellValue.red);
+               cellScore -= (1 - sameColorWeight) * highestGeneValue * highestGeneValue / ((centralCellValue.red - cellValue.green) * (centralCellValue.red - cellValue.green) + 1);
+               cellScore -= (1 - sameColorWeight) * highestGeneValue * highestGeneValue / ((centralCellValue.red - cellValue.blue) * (centralCellValue.red - cellValue.blue) + 1);
+               cellScore -= (1 - sameColorWeight) * highestGeneValue * highestGeneValue / ((centralCellValue.green - cellValue.red) * (centralCellValue.green - cellValue.red) + 1);
+               cellScore -= 2 * sameColorWeight * (centralCellValue.green - cellValue.green) * (centralCellValue.green - cellValue.green);
+               cellScore -= (1 - sameColorWeight) * highestGeneValue * highestGeneValue / ((centralCellValue.green - cellValue.blue) * (centralCellValue.green - cellValue.blue) + 1);
+               cellScore -= (1 - sameColorWeight) * highestGeneValue * highestGeneValue / ((centralCellValue.blue - cellValue.red) * (centralCellValue.blue - cellValue.red) + 1);
+               cellScore -= (1 - sameColorWeight) * highestGeneValue * highestGeneValue / ((centralCellValue.blue - cellValue.green) * (centralCellValue.blue - cellValue.green) + 1);
+               cellScore -= 2 * sameColorWeight * (centralCellValue.blue - cellValue.blue) * (centralCellValue.blue - cellValue.blue);
+               scores.push(cellScore);
+               localCellValues.push(cellValues[localCells[whichCell][0]][localCells[whichCell][1]]);
+               if (cellScore > bestScore) {
+                  bestCellValues = [cellValues[localCells[whichCell][0]][localCells[whichCell][1]]];
+                  bestScore = cellScore;
+               } else if (cellScore === bestScore) {
+                  bestCellValues.push(cellValues[localCells[whichCell][0]][localCells[whichCell][1]]);
+               }
+            }
+
+            bestCellValue = bestCellValues[Math.floor(Math.random() * bestCellValues.length)];
+            newCellValues[cellX][cellY] = {};
+
+            if (reproductionMeans === 'asexual') {
+               if (reproductionSelection === 'deterministic') {
+                  // asexual; best always gets picked
+                  newCellValues[cellX][cellY].red = bestCellValue.red;
+                  newCellValues[cellX][cellY].green = bestCellValue.green;
+                  newCellValues[cellX][cellY].blue = bestCellValue.blue;
+               } else {
+                  // asexual; better tend to get picked
+                  var chosenCellValue = localCellValues[chooseIndexProbabilistically(scores)];
+                  newCellValues[cellX][cellY].red = chosenCellValue.red;
+                  newCellValues[cellX][cellY].green = chosenCellValue.green;
+                  newCellValues[cellX][cellY].blue = chosenCellValue.blue;
+               }
+            } else if (reproductionMeans === 'sexualchromosome') {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual at chromosome level; best always gets picked
+                  newCellValues[cellX][cellY].red = Math.random() < 0.5 ? cellValues[cellX][cellY].red : bestCellValue.red;
+                  newCellValues[cellX][cellY].green = Math.random() < 0.5 ? cellValues[cellX][cellY].green : bestCellValue.green;
+                  newCellValues[cellX][cellY].blue = Math.random() < 0.5 ? cellValues[cellX][cellY].blue : bestCellValue.blue;
+               } else {
+                  // sexual at chromosome level; better tend to get picked
+                  newCellValues[cellX][cellY].red = localCellValues[chooseIndexProbabilistically(scores)].red;
+                  newCellValues[cellX][cellY].green = localCellValues[chooseIndexProbabilistically(scores)].green;
+                  newCellValues[cellX][cellY].blue = localCellValues[chooseIndexProbabilistically(scores)].blue;
+               }
+            } else {
+               if (reproductionSelection === 'deterministic') {
+                  // sexual at gene level; best always gets picked
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].red = mask & cellValues[cellX][cellY].red | ~mask & bestCellValue.red;
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].green = mask & cellValues[cellX][cellY].green | ~mask & bestCellValue.green;
+                  mask = Math.floor(Math.random() * numGeneValues);
+                  newCellValues[cellX][cellY].blue = mask & cellValues[cellX][cellY].blue | ~mask & bestCellValue.blue;
+               } else {
+                  // sexual at gene level; better tend to get picked
+                  newCellValues[cellX][cellY].red = 0;
+                  newCellValues[cellX][cellY].green = 0;
+                  newCellValues[cellX][cellY].blue = 0;
+                  for (whichGene = 0; whichGene < numGenesOnChromosome; whichGene += 1) {
+                     newCellValues[cellX][cellY].red |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].red;
+                     newCellValues[cellX][cellY].green |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].green;
+                     newCellValues[cellX][cellY].blue |= 1 << whichGene & localCellValues[chooseIndexProbabilistically(scores)].blue;
+                  }
+               }
+            }
+         }
+      }
+
+      // make new cell values current cell values
+      cellValues = newCellValues;
+   };
+
+   competitionAndCooperationRadio.onclick = function () {
+      if (advanceGeneration !== advanceGenerationGame) {
+         advanceGeneration = advanceGenerationGame;
+         document.getElementById('page-title').innerHTML = 'Evolution laboratory: Competition and cooperation';
+         gameOptionsArea.style.display = '';
+      }
+   };
+   if (competitionAndCooperationRadio.checked) {
+      competitionAndCooperationRadio.onclick();
+   }
+
+   oneCardPokerRadio.onclick = function () {
+      if (advanceGeneration !== advanceGenerationPoker) {
+         advanceGeneration = advanceGenerationPoker;
+         document.getElementById('page-title').innerHTML = 'Evolution laboratory: One-card poker';
+         gameOptionsArea.style.display = 'none';
+      }
+   };
+   if (oneCardPokerRadio.checked) {
+      oneCardPokerRadio.onclick();
+   }
+
+   auctionGameRadio.onclick = function () {
+      if (advanceGeneration !== advanceGenerationAuction) {
+         advanceGeneration = advanceGenerationAuction;
+         document.getElementById('page-title').innerHTML = 'Evolution laboratory: Two-bidder auction';
+         gameOptionsArea.style.display = 'none';
+      }
+   };
+   if (auctionGameRadio.checked) {
+      auctionGameRadio.onclick();
+   }
+
+   mateSelectionRadio.onclick = function () {
+      if (advanceGeneration !== advanceGenerationMate) {
+         advanceGeneration = advanceGenerationMate;
+         document.getElementById('page-title').innerHTML = 'Evolution laboratory: Mate selection';
+         gameOptionsArea.style.display = 'none';
+      }
+   };
+   if (mateSelectionRadio.checked) {
+      mateSelectionRadio.onclick();
+   }
 
    populationSizeSelect.onchange = function () {
       var populationSize = parseInt(populationSizeSelect.options[populationSizeSelect.selectedIndex].value, 10);
@@ -576,12 +1287,12 @@ var startPopulation = function () {
    };
 
    reproductionSelectionSelect.onchange = function () {
-      reproductionSelection = parseInt(reproductionSelectionSelect.options[reproductionSelectionSelect.selectedIndex].value, 10);
+      reproductionSelection = reproductionSelectionSelect.options[reproductionSelectionSelect.selectedIndex].value;
    };
    reproductionSelectionSelect.onchange();
 
    reproductionMeansSelect.onchange = function () {
-      reproductionMeans = parseInt(reproductionMeansSelect.options[reproductionMeansSelect.selectedIndex].value, 10);
+      reproductionMeans = reproductionMeansSelect.options[reproductionMeansSelect.selectedIndex].value;
    };
    reproductionMeansSelect.onchange();
 

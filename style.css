@@ -133,3 +133,8 @@ table.payoff-table th.payoff-header {
 .variable {
    font-style: italic;
 }
+
+::selection {
+   background-color: #660033;
+   color: #ddeeff;
+}

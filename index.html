@@ -10,7 +10,7 @@
 
 </head><body>
 
-<div class="bigtop">Evolution laboratory: Competition and cooperation</div>
+<div class="bigtop" id="page-title">Evolution laboratory</div>
 <p id="instructions">
    Click the population to advance to the next generation.&nbsp; Click and drag around to advance quickly.
 </p>
@@ -19,6 +19,15 @@
    <a href="http://www.opera.com/">Opera</a>, <a href="http://www.google.com/chrome/">Chrome</a> or <a href="http://www.getfirefox.com/">Firefox</a> and enable
    JavaScript.
 </canvas>
+<fieldset id="evolution-type-area">
+   <legend>Evolution type</legend>
+   <div>
+      <label><input checked="checked" id="competition-and-cooperation-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Competition and cooperation</label>
+      <label><input id="one-card-poker-evolution-type" name="evolution-type-options" type="radio" />&nbsp;One-card poker</label>
+      <label><input id="auction-game-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Two-bidder auction</label>
+      <label><input id="mate-selection-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Mate selection</label>
+   </div>
+</fieldset>
 <fieldset id="average-organism-area">
    <legend>Average organism</legend>
    <div id="average-organism"></div>
@@ -57,7 +66,65 @@
          <option value="128">128</option>
          <option value="256">256</option>
       </select></label>
+   </div>
+</fieldset>
+<fieldset id="interaction-neighborhood-area">
+   <legend>Interaction neighborhood</legend>
+   <div>
+      <table><tr><td>
+         <input id="interaction-neighbor-left-up" type="checkbox" />
+      </td><td>
+         <input checked="checked" id="interaction-neighbor-up" type="checkbox" />
+      </td><td>
+         <input checked="checked" id="interaction-neighbor-right-up" type="checkbox" />
+      </td></tr><tr><td>
+         <input checked="checked" id="interaction-neighbor-left" type="checkbox" />
+      </td><td>
+         <input id="interaction-neighbor-self" type="checkbox" />
+      </td><td>
+         <input checked="checked" id="interaction-neighbor-right" type="checkbox" />
+      </td></tr><tr><td>
+         <input checked="checked" id="interaction-neighbor-left-down" type="checkbox" />
+      </td><td>
+         <input checked="checked" id="interaction-neighbor-down" type="checkbox" />
+      </td><td>
+         <input id="interaction-neighbor-right-down" type="checkbox" />
+      </td></tr></table>
    </div><div>
+      <input id="interaction-hex-neighborhood" type="button" value="hex" />
+      <input id="interaction-moore-neighborhood" type="button" value="Moore" />
+   </div><div>
+      <input id="interaction-vonneumann-neighborhood" type="button" value="von Neumann" />
+   </div><div>
+      <input id="interaction-obliquevonneumann-neighborhood" type="button" value="oblique von Neumann" />
+   </div>
+</fieldset>
+<fieldset id="reproduction-options-area">
+   <legend>Reproduction options</legend>
+   <div>
+      <label>Genes on a chromosome:&nbsp;<select id="genes-on-chromosome">
+         <option value="1">1</option>
+         <option value="2">2</option>
+         <option value="4">4</option>
+         <option selected="selected" value="8">8</option>
+      </select></label>
+   </div><div>
+      <label>Selection:&nbsp;<select id="reproduction-selection">
+         <option value="deterministic">Deterministic</option>
+         <option selected="selected" value="probabilistic">Probabilistic</option>
+      </select></label>
+   </div><div>
+      <label>Means:&nbsp;<select id="reproduction-means">
+         <option value="asexual">Asexual</option>
+         <option value="sexualchromosome">Sexual (chromosome)</option>
+         <option selected="selected" value="sexualgene">Sexual (gene)</option>
+         <option value="sexualblending">Sexual (blending)</option>
+      </select></label>
+   </div>
+</fieldset>
+<fieldset id="game-options-area">
+   <legend>Game options</legend>
+   <div>
       Payoffs:&nbsp;<select id="payoff-best">
          <option selected="selected" value="9">9</option>
          <option value="8">8</option>
@@ -157,59 +224,6 @@
             </tr></table>
          </td>
       </tr></table>
-   </div>
-</fieldset>
-<fieldset id="interaction-neighborhood-area">
-   <legend>Interaction neighborhood</legend>
-   <div>
-      <table><tr><td>
-         <input id="interaction-neighbor-left-up" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="interaction-neighbor-up" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="interaction-neighbor-right-up" type="checkbox" />
-      </td></tr><tr><td>
-         <input checked="checked" id="interaction-neighbor-left" type="checkbox" />
-      </td><td>
-         <input id="interaction-neighbor-self" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="interaction-neighbor-right" type="checkbox" />
-      </td></tr><tr><td>
-         <input checked="checked" id="interaction-neighbor-left-down" type="checkbox" />
-      </td><td>
-         <input checked="checked" id="interaction-neighbor-down" type="checkbox" />
-      </td><td>
-         <input id="interaction-neighbor-right-down" type="checkbox" />
-      </td></tr></table>
-   </div><div>
-      <input id="interaction-hex-neighborhood" type="button" value="hex" />
-      <input id="interaction-moore-neighborhood" type="button" value="Moore" />
-   </div><div>
-      <input id="interaction-vonneumann-neighborhood" type="button" value="von Neumann" />
-   </div><div>
-      <input id="interaction-obliquevonneumann-neighborhood" type="button" value="oblique von Neumann" />
-   </div>
-</fieldset>
-<fieldset id="reproduction-options-area">
-   <legend>Reproduction options</legend>
-   <div>
-      <label>Genes on a chromosome:&nbsp;<select id="genes-on-chromosome">
-         <option value="1">1</option>
-         <option value="2">2</option>
-         <option value="4">4</option>
-         <option selected="selected" value="8">8</option>
-      </select></label>
-   </div><div>
-      <label>Selection:&nbsp;<select id="reproduction-selection">
-         <option value="deterministic">Deterministic</option>
-         <option selected="selected" value="probabilistic">Probabilistic</option>
-      </select></label>
-   </div><div>
-      <label>Means:&nbsp;<select id="reproduction-means">
-         <option value="asexual">Asexual</option>
-         <option value="sexualchromosome">Sexual (chromosome)</option>
-         <option selected="selected" value="sexualgene">Sexual (gene)</option>
-      </select></label>
    </div>
 </fieldset>
 <fieldset id="controls-area">
