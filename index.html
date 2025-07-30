@@ -14,7 +14,7 @@
 <p id="instructions">
    Click the population to advance to the next generation.&nbsp; Click and drag around to advance quickly.
 </p>
-<canvas id="population">
+<canvas id="population" height="840" width="840">
    Your browser does not seem to support the <code>&lt;canvas&gt;</code> element correctly.&nbsp; Please use a recent version of a standards-compliant browser such as
    <a href="http://www.opera.com/">Opera</a>, <a href="http://www.google.com/chrome/">Chrome</a> or <a href="http://www.getfirefox.com/">Firefox</a> and enable
    JavaScript.
@@ -23,9 +23,9 @@
    <legend>Evolution type</legend>
    <div>
       <label><input checked="checked" id="competition-and-cooperation-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Competition and cooperation</label>
-      <label><input id="one-card-poker-evolution-type" name="evolution-type-options" type="radio" />&nbsp;One-card poker</label>
-      <label><input id="auction-game-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Two-bidder auction</label>
-      <label><input id="mate-selection-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Mate selection</label>
+      <label><input id="betting-and-bluffing-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Betting and bluffing</label>
+      <label><input id="valuation-and-verity-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Valuation and verity</label>
+      <label><input id="culture-and-convention-evolution-type" name="evolution-type-options" type="radio" />&nbsp;Culture and convention</label>
    </div>
 </fieldset>
 <fieldset id="average-organism-area">
@@ -91,12 +91,12 @@
          <input id="interaction-neighbor-right-down" type="checkbox" />
       </td></tr></table>
    </div><div>
-      <input id="interaction-hex-neighborhood" type="button" value="hex" />
-      <input id="interaction-moore-neighborhood" type="button" value="Moore" />
+      <button id="interaction-hex-neighborhood" type="button">hex</button>
+      <button id="interaction-moore-neighborhood" type="button">Moore</button>
    </div><div>
-      <input id="interaction-vonneumann-neighborhood" type="button" value="von Neumann" />
+      <button id="interaction-vonneumann-neighborhood" type="button">von Neumann</button>
    </div><div>
-      <input id="interaction-obliquevonneumann-neighborhood" type="button" value="oblique von Neumann" />
+      <button id="interaction-obliquevonneumann-neighborhood" type="button">oblique von Neumann</button>
    </div>
 </fieldset>
 <fieldset id="reproduction-options-area">
@@ -229,13 +229,28 @@
 <fieldset id="controls-area">
    <legend>Controls</legend>
    <div>
-      <input id="randomize" type="button" value="Randomize population" />
+      <button id="randomize" type="button">Randomize population</button>
    </div><div>
-      <input id="reset-cooperate" type="button" value="Reset population to pure cooperation" />
+      <button id="reset-to-average" type="button">Reset population to current average</button>
+   </div>
+   <fieldset id="reset-to-color-area">
+      <legend>Reset population to pure color</legend>
+      <div>
+         <button class="reset-to-color" id="reset-to-00ff00" type="button"></button>
+         <button class="reset-to-color" id="reset-to-000000" type="button"></button>
+         <button class="reset-to-color" id="reset-to-0000ff" type="button"></button>
+         <button class="reset-to-color" id="reset-to-00ffff" type="button"></button>
+      </div><div>
+         <button class="reset-to-color" id="reset-to-ffff00" type="button"></button>
+         <button class="reset-to-color" id="reset-to-ff0000" type="button"></button>
+         <button class="reset-to-color" id="reset-to-ff00ff" type="button"></button>
+         <button class="reset-to-color" id="reset-to-ffffff" type="button"></button>
+      </div>
+   </fieldset>
+   <div>
+      <button id="advance" type="button">Advance to next generation</button>
    </div><div>
-      <input id="reset-defect" type="button" value="Reset population to pure defection" />
-   </div><div>
-      <input id="advance" type="button" value="Advance to next generation" />
+      <button id="snapshot" type="button">Show snapshot of population</button>
    </div>
 </fieldset>
 
