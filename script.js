@@ -1,10 +1,12 @@
-/*jslint bitwise: true, vars: true, browser: true, indent: 3 */
+/*jslint bitwise: true, browser: true, indent: 3 */
 
 (function () {
    'use strict';
 
-   var populationCanvas = document.getElementById('population');
-   var populationContext = populationCanvas && populationCanvas.getContext && populationCanvas.getContext('2d');
+   var advanceGeneration, averageOrganism, bettingAndBluffingRadio, cellHeight, cellValues, cellWidth, chooseIndexProbabilistically, competitionAndCooperationRadio, cultureAndConventionRadio, fixPayoffs, gameAgent, gameOptionsArea, gamePayoff, gamePlayedSelect, genesOnChromosomeSelect, highestColorLevel, highestGeneValue, interactionNeighborDownCheckbox, interactionNeighborLeftCheckbox, interactionNeighborLeftDownCheckbox, interactionNeighborLeftUpCheckbox, interactionNeighborRightCheckbox, interactionNeighborRightDownCheckbox, interactionNeighborRightUpCheckbox, interactionNeighborSelfCheckbox, interactionNeighborUpCheckbox, numAllowedStrats, numCellsTall, numCellsWide, numColorBits, numColorLevels, numColorLevelsPerGene, numGeneValues, numGenesOnChromosome, numRoundsPerEncounter, oldCellValues, payoffBest, payoffBestSelect, payoffCellCCCol, payoffCellCCRow, payoffCellCDCol, payoffCellCDRow, payoffCellDCCol, payoffCellDCRow, payoffCellDDCol, payoffCellDDRow, payoffNextBest, payoffNextBestSelect, payoffNextWorst, payoffNextWorstSelect, payoffPunishment, payoffReward, payoffSucker, payoffTemptation, payoffWorst, payoffWorstSelect, playAuction, playGame, playMatchup, playPoker, playTalk, populationCanvas, populationContext, populationSizeSelect, randomizePopulation, redrawPopulation, reproductionMeans, reproductionMeansSelect, reproductionSelection, reproductionSelectionSelect, resizePopulation, roundsPerEncounterSelect, valuationAndVerityRadio;
+
+   populationCanvas = document.getElementById('population');
+   populationContext = populationCanvas && populationCanvas.getContext && populationCanvas.getContext('2d');
    if (!populationContext) {
       document.getElementById('instructions').innerHTML = 'Your browser does not seem to support the <code>&lt;canvas&gt;</code> element correctly.&nbsp; Please use a recent version of a standards-compliant browser such as <a href="http://www.opera.com/">Opera</a>, <a href="http://www.google.com/chrome/">Chrome</a> or <a href="http://www.getfirefox.com/">Firefox</a>.';
       window.alert('Your browser does not seem to support the <canvas> element correctly.\nPlease use a recent version of a standards-compliant browser such as Opera, Chrome or Firefox.');
@@ -14,56 +16,49 @@
    populationCanvas.width = window.innerHeight > 945 ? 840 : 420;
    populationCanvas.height = window.innerHeight > 945 ? 840 : 420;
 
-   var numCellsWide, cellWidth, numCellsTall, cellHeight;
-   var cellValues, oldCellValues;
-   var numColorBits = 8;
-   var numColorLevels = 1 << numColorBits;
-   var highestColorLevel = numColorLevels - 1;
-   var numRoundsPerEncounter;
-   var payoffBest, payoffNextBest, payoffNextWorst, payoffWorst;
-   var payoffReward, payoffSucker, payoffTemptation, payoffPunishment;
-   var numGenesOnChromosome, numGeneValues, highestGeneValue, numColorLevelsPerGene;
-   var reproductionSelection, reproductionMeans;
-   var competitionAndCooperationRadio = document.getElementById('competition-and-cooperation-evolution-type');
-   var bettingAndBluffingRadio = document.getElementById('betting-and-bluffing-evolution-type');
-   var valuationAndVerityRadio = document.getElementById('valuation-and-verity-evolution-type');
-   var cultureAndConventionRadio = document.getElementById('culture-and-convention-evolution-type');
-   var populationSizeSelect = document.getElementById('population-size');
-   var roundsPerEncounterSelect = document.getElementById('rounds-per-encounter');
-   var gameOptionsArea = document.getElementById('game-options-area');
-   var payoffBestSelect = document.getElementById('payoff-best');
-   var payoffNextBestSelect = document.getElementById('payoff-nextbest');
-   var payoffNextWorstSelect = document.getElementById('payoff-nextworst');
-   var payoffWorstSelect = document.getElementById('payoff-worst');
-   var gamePlayedSelect = document.getElementById('game-played');
-   var payoffCellCCRow = document.getElementById('payoff-cell-cc-row');
-   var payoffCellCCCol = document.getElementById('payoff-cell-cc-col');
-   var payoffCellCDRow = document.getElementById('payoff-cell-cd-row');
-   var payoffCellCDCol = document.getElementById('payoff-cell-cd-col');
-   var payoffCellDCRow = document.getElementById('payoff-cell-dc-row');
-   var payoffCellDCCol = document.getElementById('payoff-cell-dc-col');
-   var payoffCellDDRow = document.getElementById('payoff-cell-dd-row');
-   var payoffCellDDCol = document.getElementById('payoff-cell-dd-col');
-   var interactionNeighborLeftDownCheckbox = document.getElementById('interaction-neighbor-left-down');
-   var interactionNeighborLeftCheckbox = document.getElementById('interaction-neighbor-left');
-   var interactionNeighborLeftUpCheckbox = document.getElementById('interaction-neighbor-left-up');
-   var interactionNeighborUpCheckbox = document.getElementById('interaction-neighbor-up');
-   var interactionNeighborRightUpCheckbox = document.getElementById('interaction-neighbor-right-up');
-   var interactionNeighborRightCheckbox = document.getElementById('interaction-neighbor-right');
-   var interactionNeighborRightDownCheckbox = document.getElementById('interaction-neighbor-right-down');
-   var interactionNeighborDownCheckbox = document.getElementById('interaction-neighbor-down');
-   var interactionNeighborSelfCheckbox = document.getElementById('interaction-neighbor-self');
-   var genesOnChromosomeSelect = document.getElementById('genes-on-chromosome');
-   var reproductionSelectionSelect = document.getElementById('reproduction-selection');
-   var reproductionMeansSelect = document.getElementById('reproduction-means');
-   var playMatchup = null;
-   var numAllowedStrats = 256;
+   numColorBits = 8;
+   numColorLevels = 1 << numColorBits;
+   highestColorLevel = numColorLevels - 1;
+   competitionAndCooperationRadio = document.getElementById('competition-and-cooperation-evolution-type');
+   bettingAndBluffingRadio = document.getElementById('betting-and-bluffing-evolution-type');
+   valuationAndVerityRadio = document.getElementById('valuation-and-verity-evolution-type');
+   cultureAndConventionRadio = document.getElementById('culture-and-convention-evolution-type');
+   populationSizeSelect = document.getElementById('population-size');
+   roundsPerEncounterSelect = document.getElementById('rounds-per-encounter');
+   gameOptionsArea = document.getElementById('game-options-area');
+   payoffBestSelect = document.getElementById('payoff-best');
+   payoffNextBestSelect = document.getElementById('payoff-nextbest');
+   payoffNextWorstSelect = document.getElementById('payoff-nextworst');
+   payoffWorstSelect = document.getElementById('payoff-worst');
+   gamePlayedSelect = document.getElementById('game-played');
+   payoffCellCCRow = document.getElementById('payoff-cell-cc-row');
+   payoffCellCCCol = document.getElementById('payoff-cell-cc-col');
+   payoffCellCDRow = document.getElementById('payoff-cell-cd-row');
+   payoffCellCDCol = document.getElementById('payoff-cell-cd-col');
+   payoffCellDCRow = document.getElementById('payoff-cell-dc-row');
+   payoffCellDCCol = document.getElementById('payoff-cell-dc-col');
+   payoffCellDDRow = document.getElementById('payoff-cell-dd-row');
+   payoffCellDDCol = document.getElementById('payoff-cell-dd-col');
+   interactionNeighborLeftDownCheckbox = document.getElementById('interaction-neighbor-left-down');
+   interactionNeighborLeftCheckbox = document.getElementById('interaction-neighbor-left');
+   interactionNeighborLeftUpCheckbox = document.getElementById('interaction-neighbor-left-up');
+   interactionNeighborUpCheckbox = document.getElementById('interaction-neighbor-up');
+   interactionNeighborRightUpCheckbox = document.getElementById('interaction-neighbor-right-up');
+   interactionNeighborRightCheckbox = document.getElementById('interaction-neighbor-right');
+   interactionNeighborRightDownCheckbox = document.getElementById('interaction-neighbor-right-down');
+   interactionNeighborDownCheckbox = document.getElementById('interaction-neighbor-down');
+   interactionNeighborSelfCheckbox = document.getElementById('interaction-neighbor-self');
+   genesOnChromosomeSelect = document.getElementById('genes-on-chromosome');
+   reproductionSelectionSelect = document.getElementById('reproduction-selection');
+   reproductionMeansSelect = document.getElementById('reproduction-means');
+   playMatchup = null;
+   numAllowedStrats = 256;
 
    Array.prototype.peek = function (fromTop) {
       return fromTop ? this[this.length - fromTop - 1] : this[this.length - 1];
    };
 
-   var resizePopulation = function (newNumCellsWide, newNumCellsTall) {
+   resizePopulation = function (newNumCellsWide, newNumCellsTall) {
       var cellX, cellY;
       numCellsWide = newNumCellsWide;
       cellWidth = populationCanvas.width / numCellsWide;
@@ -83,7 +78,7 @@
       }
    };
 
-   var randomizePopulation = function () {
+   randomizePopulation = function () {
       var cellX, cellY;
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
          for (cellY = 0; cellY < numCellsTall; cellY += 1) {
@@ -94,9 +89,9 @@
       }
    };
 
-   var averageOrganism = function () {
-      var cellX, cellY;
-      var averageCellValue = {red: 0, green: 0, blue: 0, dot: false};
+   averageOrganism = function () {
+      var averageCellValue, cellX, cellY;
+      averageCellValue = {red: 0, green: 0, blue: 0, dot: false};
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
          for (cellY = 0; cellY < numCellsTall; cellY += 1) {
             averageCellValue.red += cellValues[cellX][cellY].red;
@@ -110,10 +105,10 @@
       return averageCellValue;
    };
 
-   var redrawPopulation = function () {
-      var cellX, cellY, farthestFromAverage;
-      var averageOrganismElement = document.getElementById('average-organism');
-      var averageCellValue = {red: 0, green: 0, blue: 0, dot: false};
+   redrawPopulation = function () {
+      var averageCellValue, averageOrganismElement, cellX, cellY, farthestFromAverage;
+      averageOrganismElement = document.getElementById('average-organism');
+      averageCellValue = {red: 0, green: 0, blue: 0, dot: false};
 
       if (!numCellsWide || !numCellsTall) {
          return;
@@ -153,7 +148,7 @@
                                          '<div>' + (averageCellValue.red * 100 / highestGeneValue).toFixed(2) + '% red</div>';
    };
 
-   var gameAgent = function (organism, historyFocal, historyOpponent) {
+   gameAgent = function (organism, historyFocal, historyOpponent) {
       if (historyOpponent.length > 0) {
          if (historyOpponent.peek() > highestGeneValue / 2) {
             return Math.floor(Math.random() * highestGeneValue) < organism.green ? highestGeneValue : 0;
@@ -163,10 +158,10 @@
       return Math.floor(Math.random() * highestGeneValue) < organism.blue ? highestGeneValue : 0;
    };
 
-   var chooseIndexProbabilistically = function (scores) {
-      var randNum, whichCell;
-      var lowestScore = Number.POSITIVE_INFINITY;
-      var totalAdjScore = 0;
+   chooseIndexProbabilistically = function (scores) {
+      var lowestScore, randNum, totalAdjScore, whichCell;
+      lowestScore = Number.POSITIVE_INFINITY;
+      totalAdjScore = 0;
       for (whichCell = 0; whichCell < scores.length; whichCell += 1) {
          if (scores[whichCell] < lowestScore) {
             lowestScore = scores[whichCell];
@@ -189,16 +184,16 @@
       return null;
    };
 
-   var gamePayoff = function (focal, opponent) {
+   gamePayoff = function (focal, opponent) {
       // interpolate as if probabilities:
       return (focal * opponent * payoffReward + focal * (highestGeneValue - opponent) * payoffSucker + (highestGeneValue - focal) * opponent * payoffTemptation + (highestGeneValue - focal) * (highestGeneValue - opponent) * payoffPunishment) / highestGeneValue / highestGeneValue;
    };
 
-   var playGame = function (agent0, agent1, numRounds) {
-      var whichRound;
-      var history = [[], []];
-      var strat = [];
-      var totals = [0, 0];
+   playGame = function (agent0, agent1, numRounds) {
+      var history, strat, totals, whichRound;
+      history = [[], []];
+      strat = [];
+      totals = [0, 0];
       for (whichRound = 0; whichRound < numRounds; whichRound += 1) {
          strat[0] = gameAgent(agent0, history[0], history[1]);
          strat[1] = gameAgent(agent1, history[1], history[0]);
@@ -210,21 +205,21 @@
       return totals;
    };
 
-   var playPoker = function (agent0, agent1, numRounds) {
+   playPoker = function (agent0, agent1, numRounds) {
       // level of blue is how likely to bet (or how much to bet) when you have a 3 card
       // level of green is how likely to bet (or how much to bet) when you have a 2 card
       // level of red is how likely to bet (or how much to bet) when you have a 1 card
       // maybe have a 4 card; always bet maximum with it
       // ante is always 1
-      // allow user to choose constant bet amount
-      // allow user to choose number of hands played per matchup
-      var bet0, bet1, card0, card1, whichCard, whichRound;
-      var numCards = 4;
-      var anteAmount = 2;
-      var betAmount = 4;
-      var totals = [0, 0];
-      var strat0 = [agent0.red, agent0.green, agent0.blue];
-      var strat1 = [agent1.red, agent1.green, agent1.blue];
+      // allow user to choose constant bet amount?
+      // allow user to choose number of hands played per matchup?
+      var minBetAmount, bet0, bet1, card0, card1, maxBetAmount, numCards, strat0, strat1, totals, whichCard, whichRound;
+      numCards = 4;
+      minBetAmount = 1;
+      maxBetAmount = 4;
+      totals = [0, 0];
+      strat0 = [agent0.red, agent0.green, agent0.blue];
+      strat1 = [agent1.red, agent1.green, agent1.blue];
       for (whichCard = 3; whichCard < numCards; whichCard += 1) {
          strat0[whichCard] = highestGeneValue;
          strat1[whichCard] = highestGeneValue;
@@ -232,8 +227,15 @@
       for (whichRound = 0; whichRound < numRounds; whichRound += 1) {
          card0 = Math.floor(Math.random() * numCards);
          card1 = Math.floor(Math.random() * numCards);
-         bet0 = Math.floor(Math.random() * highestGeneValue) < strat0[card0] ? betAmount : anteAmount;
-         bet1 = Math.floor(Math.random() * highestGeneValue) < strat1[card1] ? betAmount : anteAmount;
+         // use color as probability of raising bet incrementally:
+         bet0 = minBetAmount;
+         while (bet0 < maxBetAmount && Math.floor(Math.random() * highestGeneValue) < strat0[card0]) {
+            bet0 += 1;
+         }
+         bet1 = minBetAmount;
+         while (bet1 < maxBetAmount && Math.floor(Math.random() * highestGeneValue) < strat1[card1]) {
+            bet1 += 1;
+         }
          if (bet0 > bet1) {
             totals[0] += bet1;
             totals[1] -= bet1;
@@ -251,13 +253,14 @@
       return totals;
    };
 
-   var playAuction = function (agent0, agent1, numRounds) {
-      var redResourceValue = 1 * highestGeneValue / 5;
-      var greenResourceValue = 2 * highestGeneValue / 5;
-      var blueResourceValue = 3 * highestGeneValue / 5;
-      var onlyWinnerPays = false;
-      var payLosingBid = true;
-      var totals = [0, 0];
+   playAuction = function (agent0, agent1, numRounds) {
+      var blueResourceValue, greenResourceValue, onlyWinnerPays, payLosingBid, redResourceValue, totals;
+      redResourceValue = 1 * highestGeneValue / 5;
+      greenResourceValue = 2 * highestGeneValue / 5;
+      blueResourceValue = 3 * highestGeneValue / 5;
+      onlyWinnerPays = false;
+      payLosingBid = true;
+      totals = [0, 0];
       if (agent0.red > agent1.red) {
          totals[0] -= payLosingBid ? agent1.red : agent0.red;
          totals[1] -= onlyWinnerPays ? 0 : agent1.red;
@@ -303,13 +306,58 @@
       return totals;
    };
 
-   var playTalk = function (agent0, agent1, numRounds) {
-      var confused, wordHeard, wordSaid;
-      var numUnderstoodWords = 0;
-      var distances = [[(agent0.red - agent1.red) * (agent0.red - agent1.red), (agent0.red - agent1.green) * (agent0.red - agent1.green), (agent0.red - agent1.blue) * (agent0.red - agent1.blue)],
-                       [(agent0.green - agent1.red) * (agent0.green - agent1.red), (agent0.green - agent1.green) * (agent0.green - agent1.green), (agent0.green - agent1.blue) * (agent0.green - agent1.blue)],
-                       [(agent0.blue - agent1.red) * (agent0.blue - agent1.red), (agent0.blue - agent1.green) * (agent0.blue - agent1.green), (agent0.blue - agent1.blue) * (agent0.blue - agent1.blue)]];
-      var totals = [0, 0];
+   playAuction = function (agent0, agent1, numRounds) {
+      // calculate pR = R / (R + G + B), etc.
+      // in comparing two organisms, compare pR, etc.
+      //    give organism with higher pR: 3 * 255 - R + B
+      //    give organism with lower pR: 255 - R + B
+      var blue0, blue1, green0, green1, red0, red1, rewardPerWin, totals;
+      totals = [0, 0];
+      rewardPerWin = 2 * highestGeneValue;
+      totals[0] += agent0.green + 2 * agent0.blue;
+      totals[1] += agent1.green + 2 * agent1.blue;
+      red0 = agent0.red * (agent1.red + agent1.green + agent1.blue);
+      red1 = agent1.red * (agent0.red + agent0.green + agent0.blue);
+      green0 = agent0.green * (agent1.red + agent1.green + agent1.blue);
+      green1 = agent1.green * (agent0.red + agent0.green + agent0.blue);
+      blue0 = agent0.blue * (agent1.red + agent1.green + agent1.blue);
+      blue1 = agent1.blue * (agent0.red + agent0.green + agent0.blue);
+      if (red0 > red1) {
+         totals[0] += 2 * rewardPerWin;
+      } else if (red0 < red1) {
+         totals[1] += 2 * rewardPerWin;
+      } else {
+         totals[0] += rewardPerWin;
+         totals[1] += rewardPerWin;
+      }
+      if (green0 > green1) {
+         totals[0] += 2 * rewardPerWin;
+      } else if (green0 < green1) {
+         totals[1] += 2 * rewardPerWin;
+      } else {
+         totals[0] += rewardPerWin;
+         totals[1] += rewardPerWin;
+      }
+      if (blue0 > blue1) {
+         totals[0] += 2 * rewardPerWin;
+      } else if (blue0 < blue1) {
+         totals[1] += 2 * rewardPerWin;
+      } else {
+         totals[0] += rewardPerWin;
+         totals[1] += rewardPerWin;
+      }
+      return totals;
+   };
+
+   playTalk = function (agent0, agent1, numRounds) {
+      var confused, distances, numUnderstoodWords, totals, wordHeard, wordSaid;
+      numUnderstoodWords = 0;
+      distances = [
+         [(agent0.red - agent1.red) * (agent0.red - agent1.red), (agent0.red - agent1.green) * (agent0.red - agent1.green), (agent0.red - agent1.blue) * (agent0.red - agent1.blue)],
+         [(agent0.green - agent1.red) * (agent0.green - agent1.red), (agent0.green - agent1.green) * (agent0.green - agent1.green), (agent0.green - agent1.blue) * (agent0.green - agent1.blue)],
+         [(agent0.blue - agent1.red) * (agent0.blue - agent1.red), (agent0.blue - agent1.green) * (agent0.blue - agent1.green), (agent0.blue - agent1.blue) * (agent0.blue - agent1.blue)]
+      ];
+      totals = [0, 0];
       for (wordSaid = 0; wordSaid < distances.length; wordSaid += 1) {
          confused = false;
          for (wordHeard = 0; wordHeard < distances.length; wordHeard += 1) {
@@ -337,15 +385,15 @@
       return totals;
    };
 
-   var advanceGeneration = function () {
-      var bestCellValue, bestCellValues, bestScore, cellScore, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, chosenCellValue, localCells, localCellValues, mask, points, scores, whichCell, whichGene;
-      var cellScores = [];
-      var tempCellValues = cellValues;
+   advanceGeneration = function () {
+      var bestCellValue, bestCellValues, bestScore, cellScore, cellScores, cellX, cellXLeft, cellXRight, cellY, cellYDown, cellYUp, chosenCellValue, localCells, localCellValues, mask, mutationProbability, numEncountersPerMatchup, points, scores, tempCellValues, whichCell, whichGene;
+      cellScores = [];
+      tempCellValues = cellValues;
       cellValues = oldCellValues;
       oldCellValues = tempCellValues;
 
-      var numEncountersPerMatchup = 1;
-      var mutationProbability = 0.002;
+      numEncountersPerMatchup = 1;
+      mutationProbability = 0.002;
 
       // initialize scores and mutate some cells
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
@@ -566,7 +614,8 @@
    }
 
    populationSizeSelect.onchange = function () {
-      var populationSize = parseInt(populationSizeSelect.options[populationSizeSelect.selectedIndex].value, 10);
+      var populationSize;
+      populationSize = parseInt(populationSizeSelect.options[populationSizeSelect.selectedIndex].value, 10);
       resizePopulation(populationSize, populationSize);
       randomizePopulation();
       redrawPopulation();
@@ -577,12 +626,15 @@
    };
    roundsPerEncounterSelect.onchange();
 
-   var fixPayoffs = function () {
-      var payoffs = [parseInt(payoffBestSelect.options[payoffBestSelect.selectedIndex].value, 10),
-                     parseInt(payoffNextBestSelect.options[payoffNextBestSelect.selectedIndex].value, 10),
-                     parseInt(payoffNextWorstSelect.options[payoffNextWorstSelect.selectedIndex].value, 10),
-                     parseInt(payoffWorstSelect.options[payoffWorstSelect.selectedIndex].value, 10)];
-      var gamePlayed = gamePlayedSelect.options[gamePlayedSelect.selectedIndex].value;
+   fixPayoffs = function () {
+      var gamePlayed, payoffs;
+      payoffs = [
+         parseInt(payoffBestSelect.options[payoffBestSelect.selectedIndex].value, 10),
+         parseInt(payoffNextBestSelect.options[payoffNextBestSelect.selectedIndex].value, 10),
+         parseInt(payoffNextWorstSelect.options[payoffNextWorstSelect.selectedIndex].value, 10),
+         parseInt(payoffWorstSelect.options[payoffWorstSelect.selectedIndex].value, 10)
+      ];
+      gamePlayed = gamePlayedSelect.options[gamePlayedSelect.selectedIndex].value;
 
       payoffs.sort(function (a, b) {
          return b - a;
@@ -759,8 +811,8 @@
    };
 
    document.getElementById('reset-to-average').onclick = function () {
-      var cellX, cellY;
-      var averageCellValue = averageOrganism();
+      var averageCellValue, cellX, cellY;
+      averageCellValue = averageOrganism();
       averageCellValue.red = Math.floor(averageCellValue.red + 0.5);
       averageCellValue.green = Math.floor(averageCellValue.green + 0.5);
       averageCellValue.blue = Math.floor(averageCellValue.blue + 0.5);
