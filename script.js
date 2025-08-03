@@ -1,9 +1,8 @@
 /*jslint bitwise: true, browser: true, indent: 3 */
 
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
    'use strict';
-
-   var advanceGeneration, averageOrganism, bettingAndBluffingRadio, cellHeight, cellValues, cellWidth, chooseIndexProbabilistically, competitionAndCooperationRadio, cultureAndConventionRadio, fixPayoffs, gameAgent, gameOptionsArea, gamePayoff, gamePlayedSelect, genesOnChromosomeSelect, highestColorLevel, highestGeneValue, interactionNeighborDownCheckbox, interactionNeighborLeftCheckbox, interactionNeighborLeftDownCheckbox, interactionNeighborLeftUpCheckbox, interactionNeighborRightCheckbox, interactionNeighborRightDownCheckbox, interactionNeighborRightUpCheckbox, interactionNeighborSelfCheckbox, interactionNeighborUpCheckbox, numAllowedStrats, numCellsTall, numCellsWide, numColorBits, numColorLevels, numColorLevelsPerGene, numGeneValues, numGenesOnChromosome, numRoundsPerEncounter, oldCellValues, payoffBest, payoffBestSelect, payoffCellCCCol, payoffCellCCRow, payoffCellCDCol, payoffCellCDRow, payoffCellDCCol, payoffCellDCRow, payoffCellDDCol, payoffCellDDRow, payoffNextBest, payoffNextBestSelect, payoffNextWorst, payoffNextWorstSelect, payoffPunishment, payoffReward, payoffSucker, payoffTemptation, payoffWorst, payoffWorstSelect, playAuction, playGame, playMatchup, playPoker, playTalk, populationCanvas, populationContext, populationSizeSelect, randomizePopulation, redrawPopulation, reproductionMeans, reproductionMeansSelect, reproductionSelection, reproductionSelectionSelect, resizePopulation, roundsPerEncounterSelect, valuationAndVerityRadio;
+   var advanceGeneration, averageOrganism, bettingAndBluffingRadio, cellHeight, cellValues, cellWidth, chooseIndexProbabilistically, competitionAndCooperationRadio, cultureAndConventionRadio, fixPayoffs, gameAgent, gameOptionsArea, gamePayoff, gamePlayedSelect, genesOnChromosomeSelect, highestColorLevel, highestGeneValue, interactionNeighborDownCheckbox, interactionNeighborLeftCheckbox, interactionNeighborLeftDownCheckbox, interactionNeighborLeftUpCheckbox, interactionNeighborRightCheckbox, interactionNeighborRightDownCheckbox, interactionNeighborRightUpCheckbox, interactionNeighborSelfCheckbox, interactionNeighborUpCheckbox, numAllowedStrats, numCellsTall, numCellsWide, numColorBits, numColorLevels, numColorLevelsPerGene, numGeneValues, numGenesOnChromosome, numRoundsPerEncounter, oldCellValues, payoffBest, payoffBestSelect, payoffCellCCCol, payoffCellCCRow, payoffCellCDCol, payoffCellCDRow, payoffCellDCCol, payoffCellDCRow, payoffCellDDCol, payoffCellDDRow, payoffNextBest, payoffNextBestSelect, payoffNextWorst, payoffNextWorstSelect, payoffPunishment, payoffReward, payoffSucker, payoffTemptation, payoffWorst, payoffWorstSelect, playAuction, playGame, playMatchup, playPoker, playTalk, populationCanvas, populationContext, populationSizeSelect, randomizePopulation, redrawPopulation, reproductionMeans, reproductionMeansSelect, reproductionSelection, reproductionSelectionSelect, resizeCanvas, resizePopulation, roundsPerEncounterSelect, valuationAndVerityRadio;
 
    populationCanvas = document.getElementById('population');
    populationContext = populationCanvas && populationCanvas.getContext && populationCanvas.getContext('2d');
@@ -13,8 +12,11 @@
       return;
    }
 
-   populationCanvas.width = window.innerHeight > 945 ? 840 : 420;
-   populationCanvas.height = window.innerHeight > 945 ? 840 : 420;
+   resizeCanvas = function () {
+      populationCanvas.width = Math.floor(Math.min(window.innerHeight * 8 / 9, window.innerWidth * 8 / 9) / 420) * 420;
+      populationCanvas.height = populationCanvas.width;
+   };
+   resizeCanvas();
 
    numColorBits = 8;
    numColorLevels = 1 << numColorBits;
@@ -51,11 +53,10 @@
    genesOnChromosomeSelect = document.getElementById('genes-on-chromosome');
    reproductionSelectionSelect = document.getElementById('reproduction-selection');
    reproductionMeansSelect = document.getElementById('reproduction-means');
-   playMatchup = null;
    numAllowedStrats = 256;
 
    Array.prototype.peek = function (fromTop) {
-      return fromTop ? this[this.length - fromTop - 1] : this[this.length - 1];
+      return this.slice(fromTop ? -1 - fromTop : -1)[0];
    };
 
    resizePopulation = function (newNumCellsWide, newNumCellsTall) {
@@ -118,8 +119,8 @@
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
          for (cellY = 0; cellY < numCellsTall; cellY += 1) {
             if (numRoundsPerEncounter < 2) {
-               populationContext.fillStyle = 'rgb(' + cellValues[cellX][cellY].blue * numColorLevelsPerGene + ', ' +
-                                             cellValues[cellX][cellY].blue * numColorLevelsPerGene + ', ' +
+               populationContext.fillStyle = 'rgb(' + Math.floor(cellValues[cellX][cellY].blue * numColorLevelsPerGene * 0.8) + ', ' +
+                                             Math.floor(cellValues[cellX][cellY].blue * numColorLevelsPerGene * 0.9) + ', ' +
                                              cellValues[cellX][cellY].blue * numColorLevelsPerGene + ')';
             } else {
                populationContext.fillStyle = 'rgb(' + cellValues[cellX][cellY].red * numColorLevelsPerGene + ', ' +
@@ -132,15 +133,9 @@
 
       // display average organism
       averageCellValue = averageOrganism();
-      if (numRoundsPerEncounter < 2) {
-         averageOrganismElement.style.backgroundColor = 'rgb(' + Math.round(averageCellValue.blue * numColorLevelsPerGene) + ', ' +
-                                                        Math.round(averageCellValue.blue * numColorLevelsPerGene) + ', ' +
-                                                        Math.round(averageCellValue.blue * numColorLevelsPerGene) + ')';
-      } else {
-         averageOrganismElement.style.backgroundColor = 'rgb(' + Math.round(averageCellValue.red * numColorLevelsPerGene) + ', ' +
-                                                        Math.round(averageCellValue.green * numColorLevelsPerGene) + ', ' +
-                                                        Math.round(averageCellValue.blue * numColorLevelsPerGene) + ')';
-      }
+      averageOrganismElement.style.backgroundColor = 'rgb(' + Math.round(averageCellValue.red * numColorLevelsPerGene) + ', ' +
+                                                     Math.round(averageCellValue.green * numColorLevelsPerGene) + ', ' +
+                                                     Math.round(averageCellValue.blue * numColorLevelsPerGene) + ')';
       farthestFromAverage = (averageCellValue.red + averageCellValue.green + averageCellValue.blue) * numColorLevelsPerGene > highestColorLevel ? 0 : highestColorLevel;
       averageOrganismElement.style.color = 'rgb(' + farthestFromAverage + ', ' + farthestFromAverage + ', ' + farthestFromAverage + ')';
       averageOrganismElement.innerHTML = '<div>' + (averageCellValue.blue * 100 / highestGeneValue).toFixed(2) + '% blue</div>' +
@@ -181,7 +176,6 @@
          }
          randNum -= scores[whichCell];
       }
-      return null;
    };
 
    gamePayoff = function (focal, opponent) {
@@ -306,7 +300,7 @@
       return totals;
    };
 
-   playAuction = function (agent0, agent1, numRounds) {
+   playTalk = function (agent0, agent1, numRounds) {
       // calculate pR = R / (R + G + B), etc.
       // in comparing two organisms, compare pR, etc.
       //    give organism with higher pR: 3 * 255 - R + B
@@ -367,8 +361,8 @@
          }
          if (!confused) {
             numUnderstoodWords += 1;
-            totals[0] += 1;
-            totals[1] += 1;
+            totals[0] += 1; // success making yourself understood
+            totals[1] += 1; // success understanding the other
          }
          confused = false;
          for (wordHeard = 0; wordHeard < distances.length; wordHeard += 1) {
@@ -378,8 +372,8 @@
          }
          if (!confused) {
             numUnderstoodWords += 1;
-            totals[0] += 1;
-            totals[1] += 1;
+            totals[0] += 1; // success understanding the other
+            totals[1] += 1; // success making yourself understood
          }
       }
       return totals;
@@ -623,6 +617,7 @@
 
    roundsPerEncounterSelect.onchange = function () {
       numRoundsPerEncounter = parseInt(roundsPerEncounterSelect.options[roundsPerEncounterSelect.selectedIndex].value, 10);
+      redrawPopulation();
    };
    roundsPerEncounterSelect.onchange();
 
@@ -927,20 +922,31 @@
       redrawPopulation();
    };
 
-   document.getElementById('snapshot').onclick = function () {
+   document.getElementById('snapshot').addEventListener('click', function () {
       window.open(populationCanvas.toDataURL(), 'Population snapshot');
-   };
+   }, false);
 
-   populationCanvas.onmousedown = function () {
-      advanceGeneration();
-      redrawPopulation();
-      document.onmousemove = function () {
+   (function () {
+      var mousedownFunc, mousemoveFunc, mouseupFunc;
+
+      mousedownFunc = function () {
+         advanceGeneration();
+         redrawPopulation();
+         document.addEventListener('mousemove', mousemoveFunc, false);
+         document.addEventListener('mouseup', mouseupFunc, false);
+      };
+
+      mousemoveFunc = function () {
          advanceGeneration();
          redrawPopulation();
       };
-      document.onmouseup = function () {
-         document.onmousemove = null;
-         document.onmouseup = null;
+
+      mouseupFunc = function () {
+         document.removeEventListener('mousemove', mousemoveFunc, false);
+         document.removeEventListener('mouseup', mouseupFunc, false);
       };
-   };
-}());
+
+      populationCanvas.addEventListener('mousedown', mousedownFunc, false);
+   }());
+
+}, false);
