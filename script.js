@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function () {
    'use strict';
    var advanceGeneration, averageOrganism, bettingAndBluffingRadio, cellHeight, cellValues, cellWidth, chooseIndexProbabilistically, competitionAndCooperationRadio, cultureAndConventionRadio, fixPayoffs, gameAgent, gameOptionsArea, gamePayoff, gamePlayedSelect, genesOnChromosomeSelect, highestColorLevel, highestGeneValue, interactionNeighborDownCheckbox, interactionNeighborLeftCheckbox, interactionNeighborLeftDownCheckbox, interactionNeighborLeftUpCheckbox, interactionNeighborRightCheckbox, interactionNeighborRightDownCheckbox, interactionNeighborRightUpCheckbox, interactionNeighborSelfCheckbox, interactionNeighborUpCheckbox, numAllowedStrats, numCellsTall, numCellsWide, numColorBits, numColorLevels, numColorLevelsPerGene, numGeneValues, numGenesOnChromosome, numRoundsPerEncounter, oldCellValues, payoffBest, payoffBestSelect, payoffCellCCCol, payoffCellCCRow, payoffCellCDCol, payoffCellCDRow, payoffCellDCCol, payoffCellDCRow, payoffCellDDCol, payoffCellDDRow, payoffNextBest, payoffNextBestSelect, payoffNextWorst, payoffNextWorstSelect, payoffPunishment, payoffReward, payoffSucker, payoffTemptation, payoffWorst, payoffWorstSelect, playAuction, playGame, playMatchup, playPoker, playTalk, populationCanvas, populationContext, populationSizeSelect, randomizePopulation, redrawPopulation, reproductionMeans, reproductionMeansSelect, reproductionSelection, reproductionSelectionSelect, resizeCanvas, resizePopulation, roundsPerEncounterSelect, valuationAndVerityRadio;
+   var totalPayoff, numPayoffs;
 
    populationCanvas = document.getElementById('population');
    populationContext = populationCanvas && populationCanvas.getContext && populationCanvas.getContext('2d');
@@ -141,9 +142,13 @@ document.addEventListener('DOMContentLoaded', function () {
       averageOrganismElement.innerHTML = '<div>' + (averageCellValue.blue * 100 / highestGeneValue).toFixed(2) + '% blue</div>' +
                                          '<div>' + (averageCellValue.green * 100 / highestGeneValue).toFixed(2) + '% green</div>' +
                                          '<div>' + (averageCellValue.red * 100 / highestGeneValue).toFixed(2) + '% red</div>';
+      if (numPayoffs > 0) {
+         averageOrganismElement.innerHTML += '<div>' + (totalPayoff / numPayoffs).toFixed(6) + '</div>';
+      }
    };
 
    gameAgent = function (organism, historyFocal, historyOpponent) {
+      // only look at opponent's last move
       if (historyOpponent.length > 0) {
          if (historyOpponent.peek() > highestGeneValue / 2) {
             return Math.floor(Math.random() * highestGeneValue) < organism.green ? highestGeneValue : 0;
@@ -193,7 +198,11 @@ document.addEventListener('DOMContentLoaded', function () {
          strat[1] = gameAgent(agent1, history[1], history[0]);
          history[0].push(strat[0]);
          history[1].push(strat[1]);
+         totalPayoff += gamePayoff(strat[0], strat[1]);
+         numPayoffs += 1;
          totals[0] += gamePayoff(strat[0], strat[1]);
+         totalPayoff += gamePayoff(strat[1], strat[0]);
+         numPayoffs += 1;
          totals[1] += gamePayoff(strat[1], strat[0]);
       }
       return totals;
@@ -221,15 +230,11 @@ document.addEventListener('DOMContentLoaded', function () {
       for (whichRound = 0; whichRound < numRounds; whichRound += 1) {
          card0 = Math.floor(Math.random() * numCards);
          card1 = Math.floor(Math.random() * numCards);
-         // use color as probability of raising bet incrementally:
-         bet0 = minBetAmount;
-         while (bet0 < maxBetAmount && Math.floor(Math.random() * highestGeneValue) < strat0[card0]) {
-            bet0 += 1;
-         }
-         bet1 = minBetAmount;
-         while (bet1 < maxBetAmount && Math.floor(Math.random() * highestGeneValue) < strat1[card1]) {
-            bet1 += 1;
-         }
+         // use color as bet amount, probabilistically rounding:
+         bet0 = strat0[card0] * (maxBetAmount - minBetAmount) / highestGeneValue;
+         bet0 = minBetAmount + Math.floor(bet0) + (Math.random() < bet0 - Math.floor(bet0) ? 1 : 0);
+         bet1 = strat1[card1] * (maxBetAmount - minBetAmount) / highestGeneValue;
+         bet1 = minBetAmount + Math.floor(bet1) + (Math.random() < bet1 - Math.floor(bet1) ? 1 : 0);
          if (bet0 > bet1) {
             totals[0] += bet1;
             totals[1] -= bet1;
@@ -409,6 +414,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       // interaction in pairs
+      totalPayoff = 0;
+      numPayoffs = 0;
       for (cellX = 0; cellX < numCellsWide; cellX += 1) {
          for (cellY = 0; cellY < numCellsTall; cellY += 1) {
             cellXRight = (cellX + 1) % numCellsWide;
