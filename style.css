@@ -3,7 +3,7 @@
 @import url(/fonts/fonts.css);
 
 :root {
-   --railway: Railway, Futura, "Century Gothic", Geneva, Tahoma, Verdana, sans-serif;
+   --geometric: "Century Gothic", Futura, Avenir, Outfit, "League Spartan", "Twentieth Century", Neuzeit, Sofia, "Harmonia Sans", "Museo Sans", Gotham, Radikal, Fredoka, Railway, "Atkinson Hyperlegible", "IBM Plex Sans", Overpass, Rubik, Montserrat, Roboto, Geneva, Tahoma, Verdana, Helvetica, sans-serif;
    --serif: Didot, Palatino, "Palatino Linotype", Gentium, serif;
 }
 
@@ -61,7 +61,7 @@ table.payoff-table th.payoff-header {
 
 .bigtop {
    color: #660033;
-   font-family: var(--railway);
+   font-family: var(--geometric);
    font-size: 250%;
    font-weight: bold;
 }
