@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
    'use strict';
-   var advanceGeneration, averageOrganism, bettingAndBluffingRadio, cellHeight, cellValues, cellWidth, chooseIndexProbabilistically, competitionAndCooperationRadio, cultureAndConventionRadio, fixPayoffs, gameAgent, gameOptionsArea, gamePayoff, gamePlayedSelect, genesOnChromosomeSelect, highestColorLevel, highestGeneValue, interactionNeighborDownCheckbox, interactionNeighborLeftCheckbox, interactionNeighborLeftDownCheckbox, interactionNeighborLeftUpCheckbox, interactionNeighborRightCheckbox, interactionNeighborRightDownCheckbox, interactionNeighborRightUpCheckbox, interactionNeighborSelfCheckbox, interactionNeighborUpCheckbox, numAllowedStrats, numCellsTall, numCellsWide, numColorBits, numColorLevels, numColorLevelsPerGene, numGeneValues, numGenesOnChromosome, numRoundsPerEncounter, oldCellValues, payoffBest, payoffBestSelect, payoffCellCCCol, payoffCellCCRow, payoffCellCDCol, payoffCellCDRow, payoffCellDCCol, payoffCellDCRow, payoffCellDDCol, payoffCellDDRow, payoffNextBest, payoffNextBestSelect, payoffNextWorst, payoffNextWorstSelect, payoffPunishment, payoffReward, payoffSucker, payoffTemptation, payoffWorst, payoffWorstSelect, playAuction, playGame, playMatchup, playPoker, playTalk, populationCanvas, populationContext, populationSizeSelect, randomizePopulation, redrawPopulation, reproductionMeans, reproductionMeansSelect, reproductionSelection, reproductionSelectionSelect, resizeCanvas, resizePopulation, roundsPerEncounterSelect, valuationAndVerityRadio;
+   var advanceGeneration, averageOrganism, bettingAndBluffingRadio, cellHeight, cellValues, cellWidth, chooseIndexProbabilistically, competitionAndCooperationRadio, cultureAndConventionRadio, fixPayoffs, gameAgent, gameOptionsArea, gamePayoff, gamePlayedSelect, genesOnChromosomeSelect, highestColorLevel, highestGeneValue, interactionNeighborDownCheckbox, interactionNeighborLeftCheckbox, interactionNeighborLeftDownCheckbox, interactionNeighborLeftUpCheckbox, interactionNeighborRightCheckbox, interactionNeighborRightDownCheckbox, interactionNeighborRightUpCheckbox, interactionNeighborSelfCheckbox, interactionNeighborUpCheckbox, numAllowedStrats, numCellsTall, numCellsWide, numColorBits, numColorLevels, numColorLevelsPerGene, numGeneValues, numGenesOnChromosome, numRoundsPerEncounter, oldCellValues, payoffBest, payoffBestSelect, payoffCellCCCol, payoffCellCCRow, payoffCellCDCol, payoffCellCDRow, payoffCellDCCol, payoffCellDCRow, payoffCellDDCol, payoffCellDDRow, payoffNextBest, payoffNextBestSelect, payoffNextWorst, payoffNextWorstSelect, payoffPunishment, payoffReward, payoffSucker, payoffTemptation, payoffWorst, payoffWorstSelect, playAuction, playGame, playMatchup, playPoker, playTalk, populationCanvas, populationContext, populationSizeSelect, randomizePopulation, redrawPopulation, reproductionMeans, reproductionMeansSelect, reproductionSelection, reproductionSelectionSelect, resizeCanvas, resizePopulation, roundsPerEncounterSelect, valuationAndVeracityRadio;
    var totalPayoff, numPayoffs;
 
    populationCanvas = document.getElementById('population');
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
    highestColorLevel = numColorLevels - 1;
    competitionAndCooperationRadio = document.getElementById('competition-and-cooperation-evolution-type');
    bettingAndBluffingRadio = document.getElementById('betting-and-bluffing-evolution-type');
-   valuationAndVerityRadio = document.getElementById('valuation-and-verity-evolution-type');
+   valuationAndVeracityRadio = document.getElementById('valuation-and-veracity-evolution-type');
    cultureAndConventionRadio = document.getElementById('culture-and-convention-evolution-type');
    populationSizeSelect = document.getElementById('population-size');
    roundsPerEncounterSelect = document.getElementById('rounds-per-encounter');
@@ -592,15 +592,15 @@ document.addEventListener('DOMContentLoaded', function () {
       bettingAndBluffingRadio.onclick();
    }
 
-   valuationAndVerityRadio.onclick = function () {
+   valuationAndVeracityRadio.onclick = function () {
       if (playMatchup !== playAuction) {
          playMatchup = playAuction;
-         document.getElementById('page-title').innerHTML = 'Evolution laboratory: Valuation and verity';
+         document.getElementById('page-title').innerHTML = 'Evolution laboratory: Valuation and veracity';
          gameOptionsArea.style.display = 'none';
       }
    };
-   if (valuationAndVerityRadio.checked) {
-      valuationAndVerityRadio.onclick();
+   if (valuationAndVeracityRadio.checked) {
+      valuationAndVeracityRadio.onclick();
    }
 
    cultureAndConventionRadio.onclick = function () {
